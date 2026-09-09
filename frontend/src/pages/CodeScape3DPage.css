@@ -1,0 +1,1214 @@
+/* =========================================================
+   CODESCAPE 3D PAGE
+   ========================================================= */
+
+.codescape3d-page {
+  min-height: 100vh;
+  background: #020617;
+  color: #e5edf8;
+  overflow: hidden;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.codescape3d-header {
+  height: 132px;
+  padding: 28px 36px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #0b1224;
+  border-bottom: 1px solid #1e293b;
+}
+
+.codescape3d-eyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+
+  color: #38bdf8;
+
+  margin-bottom: 6px;
+}
+
+.codescape3d-header h1 {
+  margin: 0;
+
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 800;
+
+  color: #f8fafc;
+}
+
+.codescape3d-header p {
+  margin: 8px 0 0;
+
+  font-size: 15px;
+  color: #94a3b8;
+}
+
+/* =========================================================
+   BACK BUTTON
+   ========================================================= */
+
+.architecture-back-button {
+  padding: 10px 16px;
+
+  border: 1px solid #334155;
+  border-radius: 9px;
+
+  background: #172235;
+  color: #e2e8f0;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.architecture-back-button:hover {
+  background: #1e293b;
+  border-color: #475569;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   3D VIEW
+   ========================================================= */
+
+.codescape3d-view {
+  position: relative;
+
+  height: calc(100vh - 132px);
+  width: 100%;
+
+  overflow: hidden;
+}
+
+.codescape3d-view canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.codescape3d-stats {
+  position: absolute;
+
+  top: 20px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  display: flex;
+  align-items: center;
+
+  gap: 30px;
+
+  padding: 11px 22px;
+
+  background: rgba(15, 23, 42, 0.94);
+
+  border: 1px solid #26354d;
+  border-radius: 12px;
+
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+
+  backdrop-filter: blur(10px);
+
+  z-index: 10;
+}
+
+.stat-item {
+  min-width: 58px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 3px;
+}
+
+.stat-item strong {
+  font-size: 19px;
+  line-height: 1;
+
+  color: #f8fafc;
+}
+
+.stat-item span {
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.8px;
+
+  color: #64748b;
+}
+
+/* =========================================================
+   CONTROL PANEL
+   ========================================================= */
+
+.codescape3d-controls {
+  position: absolute;
+
+  left: 24px;
+  bottom: 24px;
+
+  padding: 14px 16px;
+
+  min-width: 145px;
+
+  background: rgba(15, 23, 42, 0.94);
+
+  border: 1px solid #26354d;
+  border-radius: 10px;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+  line-height: 1.8;
+
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+
+  backdrop-filter: blur(10px);
+
+  z-index: 10;
+}
+
+/* =========================================================
+   LEGEND
+   ========================================================= */
+
+.codescape3d-legend {
+  position: absolute;
+
+  right: 24px;
+  bottom: 24px;
+
+  padding: 14px 16px;
+
+  min-width: 145px;
+
+  background: rgba(15, 23, 42, 0.94);
+
+  border: 1px solid #26354d;
+  border-radius: 10px;
+
+  color: #cbd5e1;
+
+  font-size: 12px;
+  line-height: 1.8;
+
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+
+  backdrop-filter: blur(10px);
+
+  z-index: 10;
+}
+
+.panel-title {
+  margin-bottom: 6px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 1.2px;
+
+  color: #64748b;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-box {
+  width: 10px;
+  height: 10px;
+
+  border-radius: 2px;
+
+  display: inline-block;
+}
+
+.module-color {
+  background: #26364f;
+  border: 1px solid #3b82f6;
+}
+
+.class-color {
+  background: #22c1f1;
+}
+
+.function-color {
+  background: #a9b8c9;
+}
+
+.dependency-color {
+  background: #f59e0b;
+}
+
+/* =========================================================
+   3D BUILDING LABELS
+   ========================================================= */
+
+.building-label {
+  min-width: 150px;
+
+  padding: 7px 10px;
+
+  background: rgba(7, 15, 30, 0.94);
+
+  border: 1px solid #3b82f6;
+  border-radius: 7px;
+
+  color: #e2e8f0;
+
+  text-align: center;
+
+  pointer-events: none;
+
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.35);
+}
+
+.building-label strong {
+  display: block;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  color: #f8fafc;
+}
+
+.building-label span {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 9px;
+
+  color: #94a3b8;
+}
+
+/* =========================================================
+   CLASS / FUNCTION LABELS
+   ========================================================= */
+
+.structure-label {
+  padding: 3px 6px;
+
+  max-width: 130px;
+
+  background: rgba(2, 6, 23, 0.9);
+
+  border-radius: 4px;
+
+  font-size: 8px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  pointer-events: none;
+}
+
+.class-label {
+  color: #67e8f9;
+
+  border: 1px solid #155e75;
+}
+
+.function-label {
+  color: #cbd5e1;
+
+  border: 1px solid #475569;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.codescape3d-empty {
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+
+  padding: 30px;
+}
+
+.codescape3d-empty h2 {
+  margin: 0 0 10px;
+
+  color: #f8fafc;
+}
+
+.codescape3d-empty p {
+  margin: 0 0 20px;
+
+  color: #94a3b8;
+}
+
+.codescape3d-empty button {
+  padding: 10px 18px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #2563eb;
+  color: white;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .codescape3d-header {
+    height: auto;
+    min-height: 130px;
+
+    padding: 22px;
+
+    gap: 15px;
+  }
+
+  .codescape3d-header h1 {
+    font-size: 25px;
+  }
+
+  .codescape3d-header p {
+    font-size: 13px;
+  }
+
+  .codescape3d-stats {
+    gap: 12px;
+    padding: 9px 13px;
+  }
+
+  .stat-item {
+    min-width: 45px;
+  }
+
+  .codescape3d-controls {
+    left: 12px;
+    bottom: 12px;
+  }
+
+  .codescape3d-legend {
+    right: 12px;
+    bottom: 12px;
+  }
+}
+
+/* =========================================================
+   INTERACTIVE INSPECTOR
+   ========================================================= */
+
+.codescape3d-inspector {
+  position: absolute;
+
+  top: 20px;
+  right: 24px;
+
+  width: 310px;
+
+  background: rgba(9, 17, 32, 0.96);
+
+  border: 1px solid #334155;
+  border-radius: 12px;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+
+  backdrop-filter: blur(14px);
+
+  z-index: 20;
+
+  overflow: hidden;
+}
+
+.inspector-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  padding: 17px 18px 14px;
+
+  border-bottom: 1px solid #1e293b;
+}
+
+.inspector-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 1.2px;
+
+  color: #38bdf8;
+
+  margin-bottom: 4px;
+}
+
+.inspector-header h2 {
+  margin: 0;
+
+  font-size: 18px;
+
+  color: #f8fafc;
+}
+
+.inspector-close {
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #334155;
+  border-radius: 6px;
+
+  background: #172235;
+  color: #cbd5e1;
+
+  font-size: 20px;
+
+  cursor: pointer;
+}
+
+.inspector-close:hover {
+  background: #26364f;
+  color: #ffffff;
+}
+
+.inspector-content {
+  padding: 18px;
+}
+
+.inspector-main-name {
+  margin-bottom: 16px;
+
+  font-size: 18px;
+  font-weight: 800;
+
+  color: #ffffff;
+
+  word-break: break-word;
+}
+
+.inspector-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 9px 0;
+
+  border-bottom: 1px solid #172033;
+}
+
+.inspector-row span {
+  font-size: 11px;
+
+  color: #64748b;
+}
+
+.inspector-row strong {
+  max-width: 190px;
+
+  font-size: 11px;
+
+  color: #cbd5e1;
+
+  text-align: right;
+
+  word-break: break-word;
+}
+
+.inspector-description {
+  margin-top: 16px;
+
+  padding: 11px;
+
+  background: #0f172a;
+
+  border: 1px solid #1e293b;
+  border-radius: 7px;
+
+  font-size: 11px;
+  line-height: 1.6;
+
+  color: #94a3b8;
+}
+
+/* =========================================================
+   SELECTED LABELS
+   ========================================================= */
+
+.building-label-selected {
+  border-color: #38bdf8;
+
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.25);
+}
+
+.structure-label-selected {
+  box-shadow: 0 0 12px rgba(34, 193, 241, 0.45);
+}
+
+/* =========================================================
+   RESPONSIVE INSPECTOR
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .codescape3d-inspector {
+    top: auto;
+    right: 15px;
+    bottom: 15px;
+    left: 15px;
+
+    width: auto;
+
+    max-height: 42vh;
+
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .codescape3d-inspector {
+    max-height: 48vh;
+  }
+}
+
+/* =========================================================
+   3D VIEW OPTIMIZATION
+   ========================================================= */
+
+.codescape3d-view {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 132px);
+
+  overflow: hidden;
+
+  background: #020617;
+}
+
+.codescape3d-view canvas {
+  display: block;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  outline: none;
+}
+
+/* Prevent HTML labels from interfering with 3D controls */
+
+.building-label,
+.structure-label {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Better inspector positioning */
+
+.codescape3d-inspector {
+  z-index: 30;
+}
+
+/* Slightly improve building labels */
+
+.building-label {
+  white-space: nowrap;
+
+  transform-origin: center center;
+}
+
+/* Make selected structural elements more visible */
+
+.structure-label-selected {
+  border-color: #38bdf8 !important;
+
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+}
+
+/* =========================================================
+   SOFTWARE HIERARCHY
+   ========================================================= */
+
+.hierarchy-label {
+  min-width: 105px;
+
+  padding: 6px 8px;
+
+  border: 1px solid #155e75;
+  border-radius: 6px;
+
+  background: rgba(8, 47, 73, 0.94);
+
+  color: #cffafe;
+
+  text-align: center;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+
+  pointer-events: none;
+
+  user-select: none;
+}
+
+.hierarchy-label strong {
+  display: block;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.hierarchy-label span {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 8px;
+
+  color: #67e8f9;
+}
+
+.hierarchy-label-selected {
+  border-color: #67e8f9;
+
+  box-shadow: 0 0 18px rgba(103, 232, 249, 0.45);
+}
+
+/* =========================================================
+   TOP LEVEL FUNCTION AREA
+   ========================================================= */
+
+.top-level-label {
+  padding: 4px 8px;
+
+  border-radius: 4px;
+
+  background: rgba(30, 41, 59, 0.9);
+
+  border: 1px solid #475569;
+
+  color: #94a3b8;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.7px;
+
+  white-space: nowrap;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   SMALL SCREEN
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .hierarchy-label {
+    min-width: 85px;
+  }
+
+  .method-label {
+    display: none;
+  }
+}
+
+/* =========================================================
+   HIERARCHICAL STRUCTURE
+   ========================================================= */
+
+.hierarchy-label {
+  min-width: 110px;
+  padding: 6px 9px;
+
+  border: 1px solid #155e75;
+  border-radius: 6px;
+
+  background: rgba(8, 47, 73, 0.95);
+
+  color: #cffafe;
+
+  text-align: center;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+
+  pointer-events: none;
+  user-select: none;
+}
+
+.hierarchy-label strong {
+  display: block;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.hierarchy-label span {
+  display: block;
+
+  margin-top: 2px;
+
+  color: #67e8f9;
+
+  font-size: 8px;
+}
+
+.hierarchy-label-selected {
+  border-color: #67e8f9;
+
+  box-shadow: 0 0 18px rgba(103, 232, 249, 0.5);
+}
+
+/* =========================================================
+   METHOD LABEL
+   ========================================================= */
+
+.method-label {
+  max-width: 90px;
+
+  padding: 3px 5px;
+
+  border: 1px solid #475569;
+  border-radius: 4px;
+
+  background: rgba(15, 23, 42, 0.96);
+
+  color: #cbd5e1;
+
+  font-family: "Consolas", "Courier New", monospace;
+
+  font-size: 7px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+.method-label-selected {
+  border-color: #ffffff;
+
+  color: #ffffff;
+
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+}
+
+/* =========================================================
+   FUNCTION LABEL
+   ========================================================= */
+
+.function-label {
+  max-width: 95px;
+
+  padding: 3px 5px;
+
+  border: 1px solid #64748b;
+  border-radius: 4px;
+
+  background: rgba(15, 23, 42, 0.96);
+
+  color: #cbd5e1;
+
+  font-family: "Consolas", "Courier New", monospace;
+
+  font-size: 7px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+.function-label-selected {
+  border-color: #ffffff;
+
+  color: #ffffff;
+
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+}
+
+/* =========================================================
+   TOP LEVEL FUNCTIONS
+   ========================================================= */
+
+.top-level-label {
+  padding: 4px 8px;
+
+  border: 1px solid #475569;
+  border-radius: 4px;
+
+  background: rgba(30, 41, 59, 0.92);
+
+  color: #94a3b8;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.7px;
+
+  white-space: nowrap;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   INSPECTOR METHOD LIST
+   ========================================================= */
+
+.inspector-method-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+  max-height: 150px;
+
+  margin-top: 14px;
+
+  overflow-y: auto;
+}
+
+.method-list-item {
+  padding: 7px 9px;
+
+  border: 1px solid #1e293b;
+  border-radius: 5px;
+
+  background: #0f172a;
+
+  color: #94a3b8;
+
+  font-family: "Consolas", "Courier New", monospace;
+
+  font-size: 9px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .hierarchy-label {
+    min-width: 85px;
+  }
+
+  .method-label {
+    display: none;
+  }
+
+  .function-label {
+    display: none;
+  }
+}
+
+/* =========================================================
+   v0.1.6 SECURITY DAMAGE
+   ========================================================= */
+
+.stat-danger strong {
+  color: #f87171;
+}
+
+/* =========================================================
+   DAMAGE BADGE
+   ========================================================= */
+
+.damage-badge {
+  min-width: 28px;
+
+  padding: 3px 6px;
+
+  border-radius: 5px;
+
+  background: rgba(127, 29, 29, 0.95);
+
+  border: 1px solid #ef4444;
+
+  color: #fecaca;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  text-align: center;
+
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.55);
+
+  pointer-events: none;
+
+  white-space: nowrap;
+}
+
+.damage-critical {
+  background: rgba(127, 29, 29, 0.98);
+  border-color: #f87171;
+  color: #fee2e2;
+}
+
+.damage-high {
+  background: rgba(127, 29, 29, 0.95);
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+.damage-medium {
+  background: rgba(124, 45, 18, 0.95);
+  border-color: #f97316;
+  color: #fed7aa;
+}
+
+.damage-low {
+  background: rgba(113, 63, 18, 0.95);
+  border-color: #facc15;
+  color: #fef08a;
+}
+
+/* =========================================================
+   DAMAGED LABELS
+   ========================================================= */
+
+.method-label-damaged,
+.function-label-damaged {
+  border-color: #ef4444;
+
+  color: #fecaca;
+
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.hierarchy-label-damaged,
+.building-label-damaged {
+  border-color: #ef4444;
+
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+}
+
+.building-label-damaged small,
+.hierarchy-label-damaged small {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #fca5a5;
+
+  font-size: 8px;
+}
+
+/* =========================================================
+   LEGEND DAMAGE
+   ========================================================= */
+
+.damage-color {
+  background: #ef4444;
+
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.65);
+}
+
+/* =========================================================
+   SECURITY SECTION
+   ========================================================= */
+
+.inspector-security {
+  margin-top: 18px;
+
+  padding-top: 14px;
+
+  border-top: 1px solid #334155;
+}
+
+.security-title {
+  margin-bottom: 10px;
+
+  color: #f87171;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.8px;
+}
+
+/* =========================================================
+   FINDING CARD
+   ========================================================= */
+
+.finding-card {
+  margin-bottom: 10px;
+
+  padding: 11px;
+
+  border: 1px solid #334155;
+  border-radius: 7px;
+
+  background: #0f172a;
+}
+
+.finding-top {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 8px;
+}
+
+.finding-top strong {
+  color: #f8fafc;
+
+  font-family: "Consolas", "Courier New", monospace;
+
+  font-size: 10px;
+}
+
+.finding-top span {
+  padding: 2px 6px;
+
+  border-radius: 4px;
+
+  background: #7f1d1d;
+
+  color: #fecaca;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+}
+
+.finding-title {
+  margin-top: 8px;
+
+  color: #e2e8f0;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.finding-meta {
+  margin-top: 5px;
+
+  color: #64748b;
+
+  font-family: "Consolas", "Courier New", monospace;
+
+  font-size: 8px;
+}
+
+.finding-evidence {
+  margin-top: 8px;
+
+  padding: 7px;
+
+  border-radius: 4px;
+
+  background: #020617;
+
+  color: #fca5a5;
+
+  font-family: "Consolas", "Courier New", monospace;
+
+  font-size: 8px;
+
+  overflow-x: auto;
+}
+
+.finding-description {
+  margin-top: 8px;
+
+  color: #94a3b8;
+
+  font-size: 9px;
+
+  line-height: 1.45;
+}
+
+.finding-recommendation {
+  margin-top: 9px;
+
+  padding: 8px;
+
+  border-left: 2px solid #22c55e;
+
+  background: rgba(20, 83, 45, 0.15);
+}
+
+.finding-recommendation strong {
+  color: #86efac;
+
+  font-size: 9px;
+}
+
+.finding-recommendation p {
+  margin: 4px 0 0;
+
+  color: #a7f3d0;
+
+  font-size: 8px;
+
+  line-height: 1.4;
+}
+
+/* =========================================================
+   HEALTHY COMPONENT
+   ========================================================= */
+
+.inspector-healthy {
+  margin-top: 18px;
+
+  padding: 10px;
+
+  border: 1px solid #14532d;
+
+  border-radius: 6px;
+
+  background: rgba(20, 83, 45, 0.15);
+
+  color: #86efac;
+
+  font-size: 9px;
+}
