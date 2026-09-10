@@ -4,12 +4,16 @@ import shutil
 from pathlib import Path
 from zipfile import ZipFile
 
+from app.services.recommendation_engine import generate_recommendations
+
 from app.services.architecture_analyzer import (
     build_architecture_model,
 )
+
 from app.services.quality_analyzer import (
     analyze_quality,
 )
+
 from app.services.security_analyzer import (
     analyze_security,
 )
@@ -270,6 +274,7 @@ def build_dependencies(
                     matching_module = (
                         known_module
                     )
+
                     break
 
             if matching_module:
@@ -307,21 +312,25 @@ def summarize_security_findings(
         )
 
         if severity == "critical":
+
             summary[
                 "critical_findings"
             ] += 1
 
         elif severity == "high":
+
             summary[
                 "high_findings"
             ] += 1
 
         elif severity == "medium":
+
             summary[
                 "medium_findings"
             ] += 1
 
         elif severity == "low":
+
             summary[
                 "low_findings"
             ] += 1
@@ -352,16 +361,19 @@ def summarize_quality_findings(
         )
 
         if severity == "high":
+
             summary[
                 "high_findings"
             ] += 1
 
         elif severity == "medium":
+
             summary[
                 "medium_findings"
             ] += 1
 
         elif severity == "low":
+
             summary[
                 "low_findings"
             ] += 1
@@ -465,10 +477,18 @@ def analyze_project(
         exist_ok=True,
     )
 
+    # ========================================
+    # EXTRACT PROJECT
+    # ========================================
+
     safe_extract_zip(
         archive_path,
         extraction_directory,
     )
+
+    # ========================================
+    # DISCOVER PYTHON FILES
+    # ========================================
 
     python_files = (
         discover_python_files(
@@ -482,7 +502,15 @@ def analyze_project(
 
     quality_findings = []
 
+    # ========================================
+    # FILE + SECURITY + QUALITY ANALYSIS
+    # ========================================
+
     for file_path in python_files:
+
+        # ------------------------------------
+        # BASIC PYTHON STRUCTURE
+        # ------------------------------------
 
         file_data = analyze_python_file(
             file_path,
@@ -493,12 +521,20 @@ def analyze_project(
             file_data
         )
 
+        # ------------------------------------
+        # SECURITY ANALYSIS
+        # ------------------------------------
+
         security_findings.extend(
             analyze_security(
                 file_path,
                 extraction_directory,
             )
         )
+
+        # ------------------------------------
+        # QUALITY ANALYSIS
+        # ------------------------------------
 
         quality_result = (
             analyze_quality(
@@ -520,6 +556,10 @@ def analyze_project(
                 ]
             ]
         )
+
+        # ------------------------------------
+        # STORE QUALITY METRICS PER FILE
+        # ------------------------------------
 
         file_data[
             "quality"
@@ -555,10 +595,18 @@ def analyze_project(
         )
     )
 
+    # ========================================
+    # MERGE ARCHITECTURE DATA INTO FILES
+    # ========================================
+
     merge_architecture_data(
         files,
         architecture_model,
     )
+
+    # ========================================
+    # BASIC DEPENDENCY ANALYSIS
+    # ========================================
 
     dependencies = (
         build_dependencies(
@@ -566,12 +614,20 @@ def analyze_project(
         )
     )
 
+    # ========================================
+    # ARCHITECTURE DEPENDENCIES
+    # ========================================
+
     architecture_dependencies = (
         architecture_model.get(
             "dependencies",
             [],
         )
     )
+
+    # ========================================
+    # PROJECT METRICS
+    # ========================================
 
     total_lines = sum(
         file_data["lines"]
@@ -614,11 +670,19 @@ def analyze_project(
         ]
     )
 
+    # ========================================
+    # SECURITY SUMMARY
+    # ========================================
+
     security_summary = (
         summarize_security_findings(
             security_findings
         )
     )
+
+    # ========================================
+    # QUALITY SUMMARY
+    # ========================================
 
     quality_summary = (
         summarize_quality_findings(
@@ -626,67 +690,161 @@ def analyze_project(
         )
     )
 
+    # ========================================
+    # AI / RECOMMENDATION ENGINE
+    # ========================================
+    #
+    # IMPORTANT:
+    # Use the actual variables created above:
+    #
+    # architecture_model
+    # security_findings
+    # quality_findings
+    #
+    # Do NOT use:
+    # architecture
+    # all_security_findings
+    # all_quality_findings
+    #
+    # ========================================
+
+    recommendation_result = (
+        generate_recommendations(
+            architecture=architecture_model,
+            security_findings=security_findings,
+            quality_findings=quality_findings,
+        )
+    )
+
+    # ========================================
+    # FINAL STRUCTURE
+    # ========================================
+
     structure = {
+
+        # ------------------------------------
+        # PROJECT INFORMATION
+        # ------------------------------------
+
         "project": {
             "id": project_id,
             "filename": original_filename,
         },
 
+        # ------------------------------------
+        # RECOMMENDATIONS
+        # ------------------------------------
+
+        "recommendations": (
+            recommendation_result
+        ),
+
+        # ------------------------------------
+        # PROJECT SUMMARY
+        # ------------------------------------
+
         "summary": {
+
             "python_files": len(
                 files
             ),
+
             "lines_of_code": total_lines,
+
             "modules": len(
                 architecture_model[
                     "modules"
                 ]
             ),
+
             "classes": total_classes,
+
             "functions": total_functions,
+
             "methods": total_methods,
+
             "imports": total_imports,
+
             "dependencies": len(
                 architecture_dependencies
             ),
         },
 
+        # ------------------------------------
+        # SECURITY SUMMARY
+        # ------------------------------------
+
         "security_summary": (
             security_summary
         ),
+
+        # ------------------------------------
+        # QUALITY SUMMARY
+        # ------------------------------------
 
         "quality_summary": (
             quality_summary
         ),
 
+        # ------------------------------------
+        # ARCHITECTURE
+        # ------------------------------------
+
         "architecture": {
+
             "modules": architecture_model[
                 "modules"
             ],
+
             "classes": architecture_model[
                 "classes"
             ],
+
             "functions": architecture_model[
                 "functions"
             ],
-            "dependencies": architecture_dependencies,
+
+            "dependencies": (
+                architecture_dependencies
+            ),
+
             "summary": architecture_model[
                 "summary"
             ],
         },
 
+        # ------------------------------------
+        # FILES
+        # ------------------------------------
+
         "files": files,
 
+        # ------------------------------------
+        # BASIC DEPENDENCIES
+        # ------------------------------------
+
         "dependencies": dependencies,
+
+        # ------------------------------------
+        # SECURITY FINDINGS
+        # ------------------------------------
 
         "security_findings": (
             security_findings
         ),
 
+        # ------------------------------------
+        # QUALITY FINDINGS
+        # ------------------------------------
+
         "quality_findings": (
             quality_findings
         ),
     }
+
+    # ========================================
+    # SAVE ANALYSIS RESULT
+    # ========================================
 
     result_file = (
         result_directory

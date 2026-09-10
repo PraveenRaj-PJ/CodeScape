@@ -3,9 +3,11 @@
    ========================================================= */
 
 .codescape3d-page {
+  position: relative;
+  width: 100%;
   min-height: 100vh;
   background: #020617;
-  color: #e5edf8;
+  color: #e5eef8;
   overflow: hidden;
 }
 
@@ -14,60 +16,84 @@
    ========================================================= */
 
 .codescape3d-header {
-  height: 132px;
-  padding: 28px 36px;
-  box-sizing: border-box;
+  position: relative;
+  z-index: 20;
+
+  min-height: 92px;
+  padding: 20px 30px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
 
-  background: #0b1224;
-  border-bottom: 1px solid #1e293b;
+  background: linear-gradient(
+    180deg,
+    rgba(2, 6, 23, 0.98),
+    rgba(2, 6, 23, 0.86)
+  );
+
+  border-bottom: 1px solid rgba(100, 116, 139, 0.18);
+
+  backdrop-filter: blur(16px);
 }
 
 .codescape3d-eyebrow {
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  margin-bottom: 5px;
+
+  color: #60a5fa;
+
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 1.8px;
+  letter-spacing: 0.18em;
+}
 
-  color: #38bdf8;
-
-  margin-bottom: 6px;
+.codescape3d-eyebrow span {
+  color: #475569;
 }
 
 .codescape3d-header h1 {
   margin: 0;
 
-  font-size: 32px;
-  line-height: 1.1;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
 
   color: #f8fafc;
 }
 
 .codescape3d-header p {
-  margin: 8px 0 0;
+  margin: 5px 0 0;
 
-  font-size: 15px;
-  color: #94a3b8;
+  color: #8190a6;
+
+  font-size: 12px;
+  line-height: 1.5;
 }
 
-/* =========================================================
-   BACK BUTTON
-   ========================================================= */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 .architecture-back-button {
-  padding: 10px 16px;
+  border: 1px solid rgba(96, 165, 250, 0.25);
 
-  border: 1px solid #334155;
+  background: rgba(15, 23, 42, 0.82);
+
+  color: #cbd5e1;
+
   border-radius: 9px;
 
-  background: #172235;
-  color: #e2e8f0;
+  padding: 10px 15px;
 
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
 
   cursor: pointer;
 
@@ -78,28 +104,34 @@
 }
 
 .architecture-back-button:hover {
-  background: #1e293b;
-  border-color: #475569;
+  background: #16233a;
+  border-color: #3b82f6;
   transform: translateY(-1px);
 }
 
 /* =========================================================
-   3D VIEW
+   VIEW
    ========================================================= */
 
 .codescape3d-view {
   position: relative;
 
-  height: calc(100vh - 132px);
-  width: 100%;
+  height: calc(100vh - 92px);
+  min-height: 620px;
 
   overflow: hidden;
+
+  background: radial-gradient(
+    circle at 50% 38%,
+    rgba(15, 71, 110, 0.12),
+    transparent 42%
+  );
 }
 
 .codescape3d-view canvas {
   display: block;
-  width: 100% !important;
-  height: 100% !important;
+  width: 100%;
+  height: 100%;
 }
 
 /* =========================================================
@@ -108,86 +140,123 @@
 
 .codescape3d-stats {
   position: absolute;
+  z-index: 10;
 
-  top: 20px;
+  top: 18px;
   left: 50%;
 
   transform: translateX(-50%);
 
   display: flex;
-  align-items: center;
+  align-items: stretch;
 
-  gap: 30px;
+  min-width: 460px;
 
-  padding: 11px 22px;
+  background: rgba(10, 18, 34, 0.9);
 
-  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid rgba(96, 165, 250, 0.2);
 
-  border: 1px solid #26354d;
-  border-radius: 12px;
+  border-radius: 13px;
 
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
 
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(18px);
 
-  z-index: 10;
+  overflow: hidden;
 }
 
 .stat-item {
-  min-width: 58px;
+  min-width: 88px;
+
+  padding: 10px 13px;
 
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 
-  gap: 3px;
+  border-right: 1px solid rgba(100, 116, 139, 0.14);
+}
+
+.stat-item:last-child {
+  border-right: none;
 }
 
 .stat-item strong {
-  font-size: 19px;
+  font-size: 18px;
   line-height: 1;
 
   color: #f8fafc;
 }
 
 .stat-item span {
-  font-size: 9px;
-  font-weight: 700;
+  margin-top: 5px;
 
-  letter-spacing: 0.8px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
 
   color: #64748b;
 }
 
+.stat-danger strong {
+  color: #fb7185;
+}
+
 /* =========================================================
-   CONTROL PANEL
+   FLOATING INFORMATION PANELS
    ========================================================= */
 
-.codescape3d-controls {
+.codescape3d-controls,
+.codescape3d-legend,
+.security-summary {
   position: absolute;
-
-  left: 24px;
-  bottom: 24px;
-
-  padding: 14px 16px;
-
-  min-width: 145px;
-
-  background: rgba(15, 23, 42, 0.94);
-
-  border: 1px solid #26354d;
-  border-radius: 10px;
-
-  color: #94a3b8;
-
-  font-size: 12px;
-  line-height: 1.8;
-
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
-
-  backdrop-filter: blur(10px);
-
   z-index: 10;
+
+  background: rgba(8, 15, 29, 0.88);
+
+  border: 1px solid rgba(100, 116, 139, 0.2);
+
+  border-radius: 11px;
+
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32);
+
+  backdrop-filter: blur(16px);
+}
+
+.codescape3d-controls {
+  left: 20px;
+  bottom: 20px;
+
+  width: 154px;
+
+  padding: 14px;
+}
+
+.codescape3d-controls > div:not(.panel-title) {
+  display: flex;
+  gap: 8px;
+
+  margin-top: 8px;
+
+  color: #8fa0b5;
+
+  font-size: 10px;
+}
+
+.codescape3d-controls > div span {
+  color: #d9e7f5;
+  font-weight: 700;
+}
+
+.panel-title {
+  margin-bottom: 8px;
+
+  color: #64748b;
+
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
 }
 
 /* =========================================================
@@ -195,149 +264,831 @@
    ========================================================= */
 
 .codescape3d-legend {
-  position: absolute;
+  right: 20px;
+  bottom: 20px;
 
-  right: 24px;
-  bottom: 24px;
+  width: 160px;
 
-  padding: 14px 16px;
-
-  min-width: 145px;
-
-  background: rgba(15, 23, 42, 0.94);
-
-  border: 1px solid #26354d;
-  border-radius: 10px;
-
-  color: #cbd5e1;
-
-  font-size: 12px;
-  line-height: 1.8;
-
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
-
-  backdrop-filter: blur(10px);
-
-  z-index: 10;
-}
-
-.panel-title {
-  margin-bottom: 6px;
-
-  font-size: 10px;
-  font-weight: 800;
-
-  letter-spacing: 1.2px;
-
-  color: #64748b;
+  padding: 14px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 8px;
+
+  margin-top: 9px;
+
+  color: #a8b6c8;
+
+  font-size: 10px;
 }
 
 .legend-box {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 
   border-radius: 2px;
 
-  display: inline-block;
+  flex-shrink: 0;
 }
 
 .module-color {
-  background: #26364f;
-  border: 1px solid #3b82f6;
+  background: #3b82f6;
+  box-shadow: 0 0 7px rgba(59, 130, 246, 0.5);
 }
 
 .class-color {
-  background: #22c1f1;
+  background: #22d3ee;
+  box-shadow: 0 0 7px rgba(34, 211, 238, 0.5);
 }
 
 .function-color {
-  background: #a9b8c9;
+  background: #a8b6c8;
 }
 
 .dependency-color {
-  background: #f59e0b;
+  background: #f5b83d;
+  box-shadow: 0 0 7px rgba(245, 184, 61, 0.45);
+}
+
+.damage-color {
+  background: #ff4d4d;
+  box-shadow: 0 0 8px rgba(255, 77, 77, 0.55);
 }
 
 /* =========================================================
-   3D BUILDING LABELS
+   SECURITY SUMMARY
    ========================================================= */
 
-.building-label {
-  min-width: 150px;
+.security-summary {
+  left: 20px;
+  top: 20px;
 
-  padding: 7px 10px;
+  width: 172px;
 
-  background: rgba(7, 15, 30, 0.94);
+  padding: 13px;
+}
 
-  border: 1px solid #3b82f6;
-  border-radius: 7px;
+.security-clean,
+.security-warning {
+  display: flex;
+  align-items: center;
+  gap: 9px;
 
-  color: #e2e8f0;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.security-clean {
+  color: #86efac;
+}
+
+.security-clean span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+
+  border-radius: 50%;
+
+  background: rgba(34, 197, 94, 0.12);
+
+  color: #4ade80;
+}
+
+.security-warning {
+  color: #fecaca;
+}
+
+.security-warning > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+
+  border-radius: 50%;
+
+  background: rgba(239, 68, 68, 0.16);
+
+  color: #f87171;
+
+  font-weight: 900;
+}
+
+.security-warning div {
+  display: flex;
+  flex-direction: column;
+}
+
+.security-warning strong {
+  color: #fca5a5;
+}
+
+.security-warning small {
+  margin-top: 2px;
+
+  color: #7f8da0;
+
+  font-size: 9px;
+}
+
+/* =========================================================
+   3D HTML LABELS
+   ========================================================= */
+
+.scene-label {
+  pointer-events: none;
+
+  min-width: 70px;
+  max-width: 190px;
+
+  padding: 6px 9px;
+
+  border-radius: 6px;
+
+  background: rgba(4, 10, 21, 0.94);
+
+  border: 1px solid rgba(100, 116, 139, 0.28);
+
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.38);
+
+  backdrop-filter: blur(9px);
 
   text-align: center;
 
-  pointer-events: none;
-
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.35);
-}
-
-.building-label strong {
-  display: block;
-
-  font-size: 12px;
-  font-weight: 800;
-
-  color: #f8fafc;
-}
-
-.building-label span {
-  display: block;
-
-  margin-top: 2px;
-
-  font-size: 9px;
-
-  color: #94a3b8;
-}
-
-/* =========================================================
-   CLASS / FUNCTION LABELS
-   ========================================================= */
-
-.structure-label {
-  padding: 3px 6px;
-
-  max-width: 130px;
-
-  background: rgba(2, 6, 23, 0.9);
-
-  border-radius: 4px;
-
-  font-size: 8px;
+  color: #dbeafe;
 
   white-space: nowrap;
+}
+
+.scene-label strong {
+  display: block;
+
+  color: #f1f5f9;
+
+  font-size: 10px;
+  font-weight: 800;
+
   overflow: hidden;
   text-overflow: ellipsis;
+}
 
-  pointer-events: none;
+.scene-label span {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #7dd3fc;
+
+  font-size: 8px;
+}
+
+.scene-label small {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #7c8ca0;
+
+  font-size: 8px;
+}
+
+.scene-label .label-danger,
+.label-danger {
+  color: #fb7185 !important;
+}
+
+.module-label {
+  border-color: rgba(59, 130, 246, 0.34);
+
+  background: rgba(7, 19, 39, 0.94);
+
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.12);
+}
+
+.module-label.selected {
+  border-color: #60a5fa;
+
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.28);
 }
 
 .class-label {
-  color: #67e8f9;
+  border-color: rgba(34, 211, 238, 0.28);
 
-  border: 1px solid #155e75;
+  background: rgba(5, 25, 36, 0.94);
 }
 
-.function-label {
+.class-label.selected {
+  border-color: #22d3ee;
+
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.25);
+}
+
+.code-block-label {
+  min-width: 110px;
+}
+
+.code-block-label.selected {
+  border-color: #60a5fa;
+
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+}
+
+.code-block-label span {
+  color: #94a3b8;
+}
+
+.function-zone-label {
+  border-color: rgba(148, 163, 184, 0.22);
+
+  background: rgba(15, 23, 42, 0.88);
+}
+
+.security-label {
+  border-color: rgba(248, 113, 113, 0.48);
+
+  background: rgba(69, 10, 10, 0.94);
+
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+.security-label strong {
+  color: #fecaca;
+}
+
+.security-label span {
+  color: #f87171;
+  font-size: 10px;
+}
+
+.security-label small {
+  color: #fb923c;
+}
+
+/* =========================================================
+   INSPECTOR
+   ========================================================= */
+
+.codescape3d-inspector {
+  position: absolute;
+  z-index: 30;
+
+  top: 20px;
+  right: 20px;
+
+  width: 340px;
+  max-height: calc(100% - 40px);
+
+  display: flex;
+  flex-direction: column;
+
+  background: rgba(7, 14, 28, 0.96);
+
+  border: 1px solid rgba(96, 165, 250, 0.2);
+
+  border-radius: 14px;
+
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+
+  backdrop-filter: blur(22px);
+
+  overflow: hidden;
+}
+
+.inspector-header {
+  padding: 16px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  border-bottom: 1px solid rgba(100, 116, 139, 0.15);
+}
+
+.inspector-eyebrow {
+  color: #60a5fa;
+
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.inspector-header h2 {
+  margin: 5px 0 0;
+
+  color: #f8fafc;
+
+  font-size: 16px;
+}
+
+.inspector-close,
+.source-close {
+  width: 30px;
+  height: 30px;
+
+  border: 1px solid rgba(100, 116, 139, 0.2);
+
+  border-radius: 7px;
+
+  background: rgba(15, 23, 42, 0.9);
+
+  color: #94a3b8;
+
+  font-size: 18px;
+
+  cursor: pointer;
+}
+
+.inspector-close:hover,
+.source-close:hover {
+  color: #f8fafc;
+  border-color: #475569;
+}
+
+.inspector-content {
+  overflow-y: auto;
+
+  padding: 16px;
+}
+
+.inspector-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.inspector-content::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+
+.inspector-main-name {
+  margin-bottom: 7px;
+
+  color: #f8fafc;
+
+  font-size: 17px;
+  font-weight: 800;
+
+  word-break: break-word;
+}
+
+.inspector-type-pill {
+  display: inline-block;
+
+  padding: 4px 7px;
+
+  border-radius: 5px;
+
+  background: #17243a;
+
+  color: #60a5fa;
+
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.inspector-details {
+  margin-top: 15px;
+
+  border-top: 1px solid rgba(100, 116, 139, 0.13);
+}
+
+.inspector-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+
+  padding: 10px 0;
+
+  border-bottom: 1px solid rgba(100, 116, 139, 0.1);
+}
+
+.inspector-row span {
+  color: #64748b;
+
+  font-size: 10px;
+}
+
+.inspector-row strong {
+  max-width: 210px;
+
   color: #cbd5e1;
 
-  border: 1px solid #475569;
+  font-size: 10px;
+
+  text-align: right;
+
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   SOURCE BUTTON
+   ========================================================= */
+
+.source-button {
+  width: 100%;
+
+  margin-top: 14px;
+
+  padding: 10px 12px;
+
+  border: 1px solid rgba(96, 165, 250, 0.28);
+
+  border-radius: 8px;
+
+  background: linear-gradient(135deg, #173a65, #102944);
+
+  color: #dbeafe;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.source-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+
+  border-color: #60a5fa;
+}
+
+.source-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.source-error {
+  margin-top: 9px;
+
+  padding: 8px;
+
+  border-radius: 7px;
+
+  background: rgba(127, 29, 29, 0.3);
+
+  border: 1px solid rgba(248, 113, 113, 0.2);
+
+  color: #fca5a5;
+
+  font-size: 9px;
+}
+
+/* =========================================================
+   SECURITY FINDINGS
+   ========================================================= */
+
+.inspector-security {
+  margin-top: 16px;
+}
+
+.security-title {
+  margin-bottom: 9px;
+
+  color: #fb7185;
+
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.finding-card {
+  margin-bottom: 9px;
+
+  padding: 10px;
+
+  border-radius: 8px;
+
+  background: rgba(15, 23, 42, 0.82);
+
+  border-left: 3px solid #64748b;
+
+  border-top: 1px solid rgba(100, 116, 139, 0.1);
+}
+
+.finding-critical {
+  border-left-color: #ff1744;
+}
+
+.finding-high {
+  border-left-color: #ff4d4d;
+}
+
+.finding-medium {
+  border-left-color: #ff9f43;
+}
+
+.finding-low {
+  border-left-color: #ffd166;
+}
+
+.finding-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.finding-top strong {
+  color: #94a3b8;
+
+  font-size: 8px;
+}
+
+.finding-top span {
+  color: #fb7185;
+
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.finding-title {
+  margin-top: 5px;
+
+  color: #e2e8f0;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  line-height: 1.4;
+}
+
+.finding-meta {
+  margin-top: 5px;
+
+  color: #64748b;
+
+  font-size: 8px;
+
+  word-break: break-word;
+}
+
+.finding-evidence {
+  margin-top: 7px;
+
+  padding: 7px;
+
+  border-radius: 5px;
+
+  background: #020617;
+
+  color: #94a3b8;
+
+  font-family: "Cascadia Code", "Consolas", monospace;
+
+  font-size: 8px;
+
+  overflow-x: auto;
+}
+
+.finding-description {
+  margin-top: 7px;
+
+  color: #8795a8;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+.finding-recommendation {
+  margin-top: 9px;
+
+  padding-top: 8px;
+
+  border-top: 1px solid rgba(100, 116, 139, 0.12);
+}
+
+.finding-recommendation strong {
+  color: #67e8f9;
+
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.finding-recommendation p {
+  margin: 4px 0 0;
+
+  color: #a5b4c7;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+.inspector-healthy {
+  margin-top: 14px;
+
+  padding: 11px;
+
+  display: flex;
+  gap: 8px;
+
+  border-radius: 8px;
+
+  background: rgba(22, 101, 52, 0.16);
+
+  border: 1px solid rgba(74, 222, 128, 0.12);
+
+  color: #86efac;
+
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.inspector-healthy span {
+  font-weight: 900;
+}
+
+.inspector-recommendation {
+  margin-top: 12px;
+
+  padding: 11px;
+
+  border-radius: 8px;
+
+  background: rgba(14, 116, 144, 0.12);
+
+  border: 1px solid rgba(34, 211, 238, 0.14);
+}
+
+.recommendation-heading {
+  margin-bottom: 6px;
+
+  color: #22d3ee;
+
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.inspector-recommendation strong {
+  color: #dbeafe;
+
+  font-size: 10px;
+}
+
+.inspector-recommendation p {
+  margin: 6px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   SOURCE OVERLAY
+   ========================================================= */
+
+.source-overlay {
+  position: absolute;
+  z-index: 100;
+
+  inset: 0;
+
+  padding: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.68);
+
+  backdrop-filter: blur(7px);
+}
+
+.source-panel {
+  width: min(1050px, 92vw);
+  height: min(720px, 88vh);
+
+  display: flex;
+  flex-direction: column;
+
+  background: #07101d;
+
+  border: 1px solid rgba(96, 165, 250, 0.22);
+
+  border-radius: 14px;
+
+  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.7);
+
+  overflow: hidden;
+}
+
+.source-header {
+  min-height: 74px;
+
+  padding: 14px 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid rgba(100, 116, 139, 0.15);
+}
+
+.source-eyebrow {
+  color: #60a5fa;
+
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+.source-header h2 {
+  margin: 5px 0 2px;
+
+  color: #f8fafc;
+
+  font-size: 15px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-header span {
+  color: #64748b;
+
+  font-size: 9px;
+}
+
+.source-code {
+  flex: 1;
+
+  overflow: auto;
+
+  padding: 10px 0;
+
+  background: #030811;
+
+  font-family: "Cascadia Code", "Consolas", monospace;
+
+  font-size: 12px;
+
+  line-height: 1.65;
+}
+
+.source-code::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.source-code::-webkit-scrollbar-thumb {
+  background: #24344b;
+  border-radius: 8px;
+}
+
+.source-line {
+  display: flex;
+
+  min-width: max-content;
+
+  padding-right: 25px;
+}
+
+.source-line:hover {
+  background: rgba(30, 41, 59, 0.45);
+}
+
+.source-line.active {
+  background: rgba(59, 130, 246, 0.16);
+
+  border-left: 3px solid #60a5fa;
+}
+
+.line-number {
+  width: 58px;
+
+  flex-shrink: 0;
+
+  padding-right: 13px;
+
+  color: #475569;
+
+  text-align: right;
+
+  user-select: none;
+}
+
+.source-line.active .line-number {
+  color: #60a5fa;
+  font-weight: 800;
+}
+
+.source-line code {
+  color: #cbd5e1;
+
+  white-space: pre;
 }
 
 /* =========================================================
@@ -349,35 +1100,69 @@
 
   display: flex;
   flex-direction: column;
-
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+
+  padding: 30px;
 
   text-align: center;
 
-  padding: 30px;
+  background: radial-gradient(circle at center, #0b1c31, #020617 62%);
+}
+
+.empty-icon {
+  width: 64px;
+  height: 64px;
+
+  margin-bottom: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(96, 165, 250, 0.25);
+
+  border-radius: 16px;
+
+  background: rgba(15, 23, 42, 0.8);
+
+  color: #60a5fa;
+
+  font-size: 27px;
 }
 
 .codescape3d-empty h2 {
-  margin: 0 0 10px;
+  margin: 0;
 
   color: #f8fafc;
+
+  font-size: 22px;
 }
 
 .codescape3d-empty p {
-  margin: 0 0 20px;
+  max-width: 420px;
 
-  color: #94a3b8;
+  margin: 9px 0 20px;
+
+  color: #64748b;
+
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .codescape3d-empty button {
-  padding: 10px 18px;
+  padding: 11px 17px;
 
-  border: none;
+  border: 1px solid rgba(96, 165, 250, 0.25);
+
   border-radius: 8px;
 
-  background: #2563eb;
-  color: white;
+  background: #173a65;
+
+  color: #dbeafe;
+
+  font-size: 11px;
+  font-weight: 800;
 
   cursor: pointer;
 }
@@ -386,31 +1171,14 @@
    RESPONSIVE
    ========================================================= */
 
-@media (max-width: 768px) {
-  .codescape3d-header {
-    height: auto;
-    min-height: 130px;
-
-    padding: 22px;
-
-    gap: 15px;
-  }
-
-  .codescape3d-header h1 {
-    font-size: 25px;
-  }
-
-  .codescape3d-header p {
-    font-size: 13px;
-  }
-
+@media (max-width: 1000px) {
   .codescape3d-stats {
-    gap: 12px;
-    padding: 9px 13px;
+    min-width: auto;
   }
 
   .stat-item {
-    min-width: 45px;
+    min-width: 70px;
+    padding: 8px;
   }
 
   .codescape3d-controls {
@@ -422,793 +1190,77 @@
     right: 12px;
     bottom: 12px;
   }
+
+  .security-summary {
+    left: 12px;
+    top: 12px;
+  }
+
+  .codescape3d-inspector {
+    width: 320px;
+    right: 12px;
+  }
 }
 
-/* =========================================================
-   INTERACTIVE INSPECTOR
-   ========================================================= */
+@media (max-width: 720px) {
+  .codescape3d-header {
+    min-height: auto;
 
-.codescape3d-inspector {
-  position: absolute;
+    padding: 14px 16px;
 
-  top: 20px;
-  right: 24px;
+    align-items: flex-start;
+  }
 
-  width: 310px;
+  .codescape3d-header h1 {
+    font-size: 18px;
+  }
 
-  background: rgba(9, 17, 32, 0.96);
+  .codescape3d-header p {
+    display: none;
+  }
 
-  border: 1px solid #334155;
-  border-radius: 12px;
+  .codescape3d-view {
+    height: calc(100vh - 70px);
+    min-height: 580px;
+  }
 
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  .codescape3d-stats {
+    top: 12px;
 
-  backdrop-filter: blur(14px);
+    transform: translateX(-50%) scale(0.82);
 
-  z-index: 20;
+    transform-origin: top center;
+  }
 
-  overflow: hidden;
-}
+  .security-summary {
+    display: none;
+  }
 
-.inspector-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  .codescape3d-controls {
+    display: none;
+  }
 
-  padding: 17px 18px 14px;
+  .codescape3d-legend {
+    display: none;
+  }
 
-  border-bottom: 1px solid #1e293b;
-}
-
-.inspector-eyebrow {
-  font-size: 9px;
-  font-weight: 800;
-
-  letter-spacing: 1.2px;
-
-  color: #38bdf8;
-
-  margin-bottom: 4px;
-}
-
-.inspector-header h2 {
-  margin: 0;
-
-  font-size: 18px;
-
-  color: #f8fafc;
-}
-
-.inspector-close {
-  width: 28px;
-  height: 28px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 1px solid #334155;
-  border-radius: 6px;
-
-  background: #172235;
-  color: #cbd5e1;
-
-  font-size: 20px;
-
-  cursor: pointer;
-}
-
-.inspector-close:hover {
-  background: #26364f;
-  color: #ffffff;
-}
-
-.inspector-content {
-  padding: 18px;
-}
-
-.inspector-main-name {
-  margin-bottom: 16px;
-
-  font-size: 18px;
-  font-weight: 800;
-
-  color: #ffffff;
-
-  word-break: break-word;
-}
-
-.inspector-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 15px;
-
-  padding: 9px 0;
-
-  border-bottom: 1px solid #172033;
-}
-
-.inspector-row span {
-  font-size: 11px;
-
-  color: #64748b;
-}
-
-.inspector-row strong {
-  max-width: 190px;
-
-  font-size: 11px;
-
-  color: #cbd5e1;
-
-  text-align: right;
-
-  word-break: break-word;
-}
-
-.inspector-description {
-  margin-top: 16px;
-
-  padding: 11px;
-
-  background: #0f172a;
-
-  border: 1px solid #1e293b;
-  border-radius: 7px;
-
-  font-size: 11px;
-  line-height: 1.6;
-
-  color: #94a3b8;
-}
-
-/* =========================================================
-   SELECTED LABELS
-   ========================================================= */
-
-.building-label-selected {
-  border-color: #38bdf8;
-
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.25);
-}
-
-.structure-label-selected {
-  box-shadow: 0 0 12px rgba(34, 193, 241, 0.45);
-}
-
-/* =========================================================
-   RESPONSIVE INSPECTOR
-   ========================================================= */
-
-@media (max-width: 900px) {
   .codescape3d-inspector {
     top: auto;
-    right: 15px;
-    bottom: 15px;
-    left: 15px;
+    bottom: 0;
+    right: 0;
 
-    width: auto;
+    width: 100%;
+    max-height: 58vh;
 
-    max-height: 42vh;
-
-    overflow-y: auto;
-  }
-}
-
-@media (max-width: 600px) {
-  .codescape3d-inspector {
-    max-height: 48vh;
-  }
-}
-
-/* =========================================================
-   3D VIEW OPTIMIZATION
-   ========================================================= */
-
-.codescape3d-view {
-  position: relative;
-  width: 100%;
-  height: calc(100vh - 132px);
-
-  overflow: hidden;
-
-  background: #020617;
-}
-
-.codescape3d-view canvas {
-  display: block;
-
-  width: 100% !important;
-  height: 100% !important;
-
-  outline: none;
-}
-
-/* Prevent HTML labels from interfering with 3D controls */
-
-.building-label,
-.structure-label {
-  user-select: none;
-  pointer-events: none;
-}
-
-/* Better inspector positioning */
-
-.codescape3d-inspector {
-  z-index: 30;
-}
-
-/* Slightly improve building labels */
-
-.building-label {
-  white-space: nowrap;
-
-  transform-origin: center center;
-}
-
-/* Make selected structural elements more visible */
-
-.structure-label-selected {
-  border-color: #38bdf8 !important;
-
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
-}
-
-/* =========================================================
-   SOFTWARE HIERARCHY
-   ========================================================= */
-
-.hierarchy-label {
-  min-width: 105px;
-
-  padding: 6px 8px;
-
-  border: 1px solid #155e75;
-  border-radius: 6px;
-
-  background: rgba(8, 47, 73, 0.94);
-
-  color: #cffafe;
-
-  text-align: center;
-
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-
-  pointer-events: none;
-
-  user-select: none;
-}
-
-.hierarchy-label strong {
-  display: block;
-
-  font-size: 10px;
-  font-weight: 800;
-
-  white-space: nowrap;
-}
-
-.hierarchy-label span {
-  display: block;
-
-  margin-top: 2px;
-
-  font-size: 8px;
-
-  color: #67e8f9;
-}
-
-.hierarchy-label-selected {
-  border-color: #67e8f9;
-
-  box-shadow: 0 0 18px rgba(103, 232, 249, 0.45);
-}
-
-/* =========================================================
-   TOP LEVEL FUNCTION AREA
-   ========================================================= */
-
-.top-level-label {
-  padding: 4px 8px;
-
-  border-radius: 4px;
-
-  background: rgba(30, 41, 59, 0.9);
-
-  border: 1px solid #475569;
-
-  color: #94a3b8;
-
-  font-size: 8px;
-  font-weight: 800;
-
-  letter-spacing: 0.7px;
-
-  white-space: nowrap;
-
-  pointer-events: none;
-}
-
-/* =========================================================
-   SMALL SCREEN
-   ========================================================= */
-
-@media (max-width: 900px) {
-  .hierarchy-label {
-    min-width: 85px;
+    border-radius: 14px 14px 0 0;
   }
 
-  .method-label {
-    display: none;
-  }
-}
-
-/* =========================================================
-   HIERARCHICAL STRUCTURE
-   ========================================================= */
-
-.hierarchy-label {
-  min-width: 110px;
-  padding: 6px 9px;
-
-  border: 1px solid #155e75;
-  border-radius: 6px;
-
-  background: rgba(8, 47, 73, 0.95);
-
-  color: #cffafe;
-
-  text-align: center;
-
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-
-  pointer-events: none;
-  user-select: none;
-}
-
-.hierarchy-label strong {
-  display: block;
-
-  font-size: 10px;
-  font-weight: 800;
-
-  white-space: nowrap;
-}
-
-.hierarchy-label span {
-  display: block;
-
-  margin-top: 2px;
-
-  color: #67e8f9;
-
-  font-size: 8px;
-}
-
-.hierarchy-label-selected {
-  border-color: #67e8f9;
-
-  box-shadow: 0 0 18px rgba(103, 232, 249, 0.5);
-}
-
-/* =========================================================
-   METHOD LABEL
-   ========================================================= */
-
-.method-label {
-  max-width: 90px;
-
-  padding: 3px 5px;
-
-  border: 1px solid #475569;
-  border-radius: 4px;
-
-  background: rgba(15, 23, 42, 0.96);
-
-  color: #cbd5e1;
-
-  font-family: "Consolas", "Courier New", monospace;
-
-  font-size: 7px;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  pointer-events: none;
-  user-select: none;
-}
-
-.method-label-selected {
-  border-color: #ffffff;
-
-  color: #ffffff;
-
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
-}
-
-/* =========================================================
-   FUNCTION LABEL
-   ========================================================= */
-
-.function-label {
-  max-width: 95px;
-
-  padding: 3px 5px;
-
-  border: 1px solid #64748b;
-  border-radius: 4px;
-
-  background: rgba(15, 23, 42, 0.96);
-
-  color: #cbd5e1;
-
-  font-family: "Consolas", "Courier New", monospace;
-
-  font-size: 7px;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  pointer-events: none;
-  user-select: none;
-}
-
-.function-label-selected {
-  border-color: #ffffff;
-
-  color: #ffffff;
-
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
-}
-
-/* =========================================================
-   TOP LEVEL FUNCTIONS
-   ========================================================= */
-
-.top-level-label {
-  padding: 4px 8px;
-
-  border: 1px solid #475569;
-  border-radius: 4px;
-
-  background: rgba(30, 41, 59, 0.92);
-
-  color: #94a3b8;
-
-  font-size: 8px;
-  font-weight: 800;
-
-  letter-spacing: 0.7px;
-
-  white-space: nowrap;
-
-  pointer-events: none;
-}
-
-/* =========================================================
-   INSPECTOR METHOD LIST
-   ========================================================= */
-
-.inspector-method-list {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 5px;
-
-  max-height: 150px;
-
-  margin-top: 14px;
-
-  overflow-y: auto;
-}
-
-.method-list-item {
-  padding: 7px 9px;
-
-  border: 1px solid #1e293b;
-  border-radius: 5px;
-
-  background: #0f172a;
-
-  color: #94a3b8;
-
-  font-family: "Consolas", "Courier New", monospace;
-
-  font-size: 9px;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 900px) {
-  .hierarchy-label {
-    min-width: 85px;
+  .source-overlay {
+    padding: 10px;
   }
 
-  .method-label {
-    display: none;
+  .source-panel {
+    width: 100%;
+    height: 94vh;
   }
-
-  .function-label {
-    display: none;
-  }
-}
-
-/* =========================================================
-   v0.1.6 SECURITY DAMAGE
-   ========================================================= */
-
-.stat-danger strong {
-  color: #f87171;
-}
-
-/* =========================================================
-   DAMAGE BADGE
-   ========================================================= */
-
-.damage-badge {
-  min-width: 28px;
-
-  padding: 3px 6px;
-
-  border-radius: 5px;
-
-  background: rgba(127, 29, 29, 0.95);
-
-  border: 1px solid #ef4444;
-
-  color: #fecaca;
-
-  font-size: 9px;
-  font-weight: 800;
-
-  text-align: center;
-
-  box-shadow: 0 0 14px rgba(239, 68, 68, 0.55);
-
-  pointer-events: none;
-
-  white-space: nowrap;
-}
-
-.damage-critical {
-  background: rgba(127, 29, 29, 0.98);
-  border-color: #f87171;
-  color: #fee2e2;
-}
-
-.damage-high {
-  background: rgba(127, 29, 29, 0.95);
-  border-color: #ef4444;
-  color: #fecaca;
-}
-
-.damage-medium {
-  background: rgba(124, 45, 18, 0.95);
-  border-color: #f97316;
-  color: #fed7aa;
-}
-
-.damage-low {
-  background: rgba(113, 63, 18, 0.95);
-  border-color: #facc15;
-  color: #fef08a;
-}
-
-/* =========================================================
-   DAMAGED LABELS
-   ========================================================= */
-
-.method-label-damaged,
-.function-label-damaged {
-  border-color: #ef4444;
-
-  color: #fecaca;
-
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
-}
-
-.hierarchy-label-damaged,
-.building-label-damaged {
-  border-color: #ef4444;
-
-  box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
-}
-
-.building-label-damaged small,
-.hierarchy-label-damaged small {
-  display: block;
-
-  margin-top: 4px;
-
-  color: #fca5a5;
-
-  font-size: 8px;
-}
-
-/* =========================================================
-   LEGEND DAMAGE
-   ========================================================= */
-
-.damage-color {
-  background: #ef4444;
-
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.65);
-}
-
-/* =========================================================
-   SECURITY SECTION
-   ========================================================= */
-
-.inspector-security {
-  margin-top: 18px;
-
-  padding-top: 14px;
-
-  border-top: 1px solid #334155;
-}
-
-.security-title {
-  margin-bottom: 10px;
-
-  color: #f87171;
-
-  font-size: 10px;
-  font-weight: 800;
-
-  letter-spacing: 0.8px;
-}
-
-/* =========================================================
-   FINDING CARD
-   ========================================================= */
-
-.finding-card {
-  margin-bottom: 10px;
-
-  padding: 11px;
-
-  border: 1px solid #334155;
-  border-radius: 7px;
-
-  background: #0f172a;
-}
-
-.finding-top {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 8px;
-}
-
-.finding-top strong {
-  color: #f8fafc;
-
-  font-family: "Consolas", "Courier New", monospace;
-
-  font-size: 10px;
-}
-
-.finding-top span {
-  padding: 2px 6px;
-
-  border-radius: 4px;
-
-  background: #7f1d1d;
-
-  color: #fecaca;
-
-  font-size: 8px;
-  font-weight: 800;
-
-  text-transform: uppercase;
-}
-
-.finding-title {
-  margin-top: 8px;
-
-  color: #e2e8f0;
-
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.finding-meta {
-  margin-top: 5px;
-
-  color: #64748b;
-
-  font-family: "Consolas", "Courier New", monospace;
-
-  font-size: 8px;
-}
-
-.finding-evidence {
-  margin-top: 8px;
-
-  padding: 7px;
-
-  border-radius: 4px;
-
-  background: #020617;
-
-  color: #fca5a5;
-
-  font-family: "Consolas", "Courier New", monospace;
-
-  font-size: 8px;
-
-  overflow-x: auto;
-}
-
-.finding-description {
-  margin-top: 8px;
-
-  color: #94a3b8;
-
-  font-size: 9px;
-
-  line-height: 1.45;
-}
-
-.finding-recommendation {
-  margin-top: 9px;
-
-  padding: 8px;
-
-  border-left: 2px solid #22c55e;
-
-  background: rgba(20, 83, 45, 0.15);
-}
-
-.finding-recommendation strong {
-  color: #86efac;
-
-  font-size: 9px;
-}
-
-.finding-recommendation p {
-  margin: 4px 0 0;
-
-  color: #a7f3d0;
-
-  font-size: 8px;
-
-  line-height: 1.4;
-}
-
-/* =========================================================
-   HEALTHY COMPONENT
-   ========================================================= */
-
-.inspector-healthy {
-  margin-top: 18px;
-
-  padding: 10px;
-
-  border: 1px solid #14532d;
-
-  border-radius: 6px;
-
-  background: rgba(20, 83, 45, 0.15);
-
-  color: #86efac;
-
-  font-size: 9px;
 }

@@ -6,6 +6,7 @@ from fastapi import (
     APIRouter,
     File,
     HTTPException,
+    Query,
     UploadFile,
     status,
 )
@@ -284,3 +285,254 @@ async def analyze_uploaded_project(
                 "for the detailed error."
             ),
         ) from error
+
+
+# ============================================================
+# READ SOURCE FILE
+# ============================================================
+
+@router.get(
+    "/{project_id}/source"
+)
+async def get_source_file(
+    project_id: str,
+    path: str = Query(
+        ...,
+        description=(
+            "Relative source-file path "
+            "inside the uploaded ZIP."
+        ),
+    ),
+):
+    """
+    Return the source code of a file from
+    the uploaded project ZIP.
+
+    This endpoint is used by the CodeScape
+    Source Code Inspector.
+    """
+
+    # --------------------------------------------------------
+    # Validate project ID
+    # --------------------------------------------------------
+
+    if (
+        not project_id
+        or "/" in project_id
+        or "\\" in project_id
+        or ".." in project_id
+    ):
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=(
+                "Invalid project ID."
+            ),
+        )
+
+    # --------------------------------------------------------
+    # Locate uploaded ZIP
+    # --------------------------------------------------------
+
+    project_zip = (
+        UPLOAD_DIR
+        / f"{project_id}.zip"
+    )
+
+    if not project_zip.exists():
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_404_NOT_FOUND
+            ),
+            detail=(
+                "Project ZIP was not found."
+            ),
+        )
+
+    # --------------------------------------------------------
+    # Normalize source path
+    # --------------------------------------------------------
+
+    source_path = (
+        path
+        .replace("\\", "/")
+        .lstrip("/")
+    )
+
+    # Prevent path traversal
+    path_parts = Path(
+        source_path
+    ).parts
+
+    if (
+        not source_path
+        or ".." in path_parts
+    ):
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=(
+                "Invalid source file path."
+            ),
+        )
+
+    # --------------------------------------------------------
+    # Read source from ZIP
+    # --------------------------------------------------------
+
+    try:
+
+        with ZipFile(
+            project_zip,
+            "r",
+        ) as archive:
+
+            # -----------------------------------------------
+            # Find exact file
+            # -----------------------------------------------
+
+            archive_names = (
+                archive.namelist()
+            )
+
+            if source_path not in archive_names:
+
+                # Handle ZIP paths that may contain
+                # a leading ./ prefix.
+                alternative_path = (
+                    source_path
+                    if source_path.startswith("./")
+                    else f"./{source_path}"
+                )
+
+                if alternative_path in archive_names:
+
+                    source_path = (
+                        alternative_path
+                    )
+
+                else:
+
+                    raise HTTPException(
+                        status_code=(
+                            status.HTTP_404_NOT_FOUND
+                        ),
+                        detail=(
+                            f"Source file '{path}' "
+                            "was not found in "
+                            "the project."
+                        ),
+                    )
+
+            # -----------------------------------------------
+            # Prevent reading directories
+            # -----------------------------------------------
+
+            info = archive.getinfo(
+                source_path
+            )
+
+            if info.is_dir():
+
+                raise HTTPException(
+                    status_code=(
+                        status.HTTP_400_BAD_REQUEST
+                    ),
+                    detail=(
+                        "The requested path "
+                        "is a directory."
+                    ),
+                )
+
+            # -----------------------------------------------
+            # Read bytes
+            # -----------------------------------------------
+
+            source_bytes = (
+                archive.read(
+                    source_path
+                )
+            )
+
+    except BadZipFile as error:
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=(
+                "The project ZIP is corrupted."
+            ),
+        ) from error
+
+    except HTTPException:
+
+        raise
+
+    except OSError as error:
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            ),
+            detail=(
+                "Unable to read the project ZIP."
+            ),
+        ) from error
+
+    # --------------------------------------------------------
+    # Decode source
+    # --------------------------------------------------------
+
+    try:
+
+        source_code = (
+            source_bytes.decode(
+                "utf-8"
+            )
+        )
+
+    except UnicodeDecodeError:
+
+        try:
+
+            source_code = (
+                source_bytes.decode(
+                    "utf-8",
+                    errors="replace",
+                )
+            )
+
+        except Exception as error:
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_400_BAD_REQUEST
+                ),
+                detail=(
+                    "The requested file "
+                    "could not be decoded "
+                    "as text."
+                ),
+            ) from error
+
+    # --------------------------------------------------------
+    # Success
+    # --------------------------------------------------------
+
+    return {
+        "success": True,
+        "project_id": project_id,
+        "path": path,
+        "content": source_code,
+        "line_count": (
+            len(
+                source_code.splitlines()
+            )
+        ),
+    }

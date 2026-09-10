@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment, Grid, Html } from "@react-three/drei";
+import {
+  OrbitControls,
+  Environment,
+  Grid,
+  Html,
+  Line,
+} from "@react-three/drei";
+
+import { getSourceFile } from "../services/api";
 
 import "./CodeScape3DPage.css";
 
@@ -9,7 +17,7 @@ import "./CodeScape3DPage.css";
    GENERAL HELPERS
    ========================================================= */
 
-function getItemName(item, fallback) {
+function getItemName(item, fallback = "Unnamed") {
   return (
     item?.name ||
     item?.module_name ||
@@ -68,21 +76,10 @@ function getEndLine(item) {
 function severityRank(severity) {
   const value = String(severity || "").toLowerCase();
 
-  if (value === "critical") {
-    return 5;
-  }
-
-  if (value === "high") {
-    return 4;
-  }
-
-  if (value === "medium") {
-    return 3;
-  }
-
-  if (value === "low") {
-    return 2;
-  }
+  if (value === "critical") return 5;
+  if (value === "high") return 4;
+  if (value === "medium") return 3;
+  if (value === "low") return 2;
 
   return 1;
 }
@@ -101,14 +98,30 @@ function getHighestSeverity(findings) {
   }, findings[0])?.severity;
 }
 
-function getSeverityClass(severity) {
-  const value = String(severity || "info").toLowerCase();
+function getSeverityColor(severity) {
+  const rank = severityRank(severity);
 
-  return `damage-${value}`;
+  if (rank >= 5) return "#ff1744";
+  if (rank >= 4) return "#ff4d4d";
+  if (rank >= 3) return "#ff9f43";
+  if (rank >= 2) return "#ffd166";
+
+  return "#94a3b8";
+}
+
+function getSeverityGlow(severity) {
+  const rank = severityRank(severity);
+
+  if (rank >= 5) return "#8b001c";
+  if (rank >= 4) return "#8f1d1d";
+  if (rank >= 3) return "#8a4b08";
+  if (rank >= 2) return "#806400";
+
+  return "#334155";
 }
 
 /* =========================================================
-   FINDING → FILE
+   FINDING MATCHING
    ========================================================= */
 
 function findingMatchesFile(finding, filePath) {
@@ -116,10 +129,6 @@ function findingMatchesFile(finding, filePath) {
     pathsMatch(finding?.file, filePath) || pathsMatch(finding?.path, filePath)
   );
 }
-
-/* =========================================================
-   FINDING → FUNCTION / METHOD
-   ========================================================= */
 
 function findingMatchesItem(finding, item) {
   const itemFile =
@@ -130,9 +139,7 @@ function findingMatchesItem(finding, item) {
   }
 
   const findingLine = getLine(finding);
-
   const startLine = getLine(item);
-
   const endLine = getEndLine(item);
 
   if (findingLine <= 0 || startLine <= 0) {
@@ -141,10 +148,6 @@ function findingMatchesItem(finding, item) {
 
   return findingLine >= startLine && findingLine <= endLine;
 }
-
-/* =========================================================
-   MODULE FINDINGS
-   ========================================================= */
 
 function getModuleFindings(module, findings) {
   if (!module || !findings) {
@@ -157,10 +160,6 @@ function getModuleFindings(module, findings) {
   return findings.filter((finding) => findingMatchesFile(finding, modulePath));
 }
 
-/* =========================================================
-   CLASS FINDINGS
-   ========================================================= */
-
 function getClassFindings(classItem, findings) {
   if (!classItem || !findings) {
     return [];
@@ -169,10 +168,6 @@ function getClassFindings(classItem, findings) {
   return findings.filter((finding) => findingMatchesItem(finding, classItem));
 }
 
-/* =========================================================
-   METHOD FINDINGS
-   ========================================================= */
-
 function getMethodFindings(method, findings) {
   if (!method || !findings) {
     return [];
@@ -180,10 +175,6 @@ function getMethodFindings(method, findings) {
 
   return findings.filter((finding) => findingMatchesItem(finding, method));
 }
-
-/* =========================================================
-   FUNCTION FINDINGS
-   ========================================================= */
 
 function getFunctionFindings(functionItem, findings) {
   if (!functionItem || !findings) {
@@ -196,7 +187,7 @@ function getFunctionFindings(functionItem, findings) {
 }
 
 /* =========================================================
-   MODULE → CLASSES
+   ARCHITECTURE RELATION HELPERS
    ========================================================= */
 
 function getModuleClasses(module, allClasses) {
@@ -223,10 +214,6 @@ function getModuleClasses(module, allClasses) {
   });
 }
 
-/* =========================================================
-   MODULE → FUNCTIONS
-   ========================================================= */
-
 function getModuleFunctions(module, allFunctions) {
   const modulePath =
     module?.path || module?.file || module?.name || module?.module_name;
@@ -251,10 +238,6 @@ function getModuleFunctions(module, allFunctions) {
   });
 }
 
-/* =========================================================
-   CLASS METHODS
-   ========================================================= */
-
 function getClassMethods(classItem) {
   if (Array.isArray(classItem?.methods)) {
     return classItem.methods;
@@ -268,130 +251,276 @@ function getClassMethods(classItem) {
 }
 
 /* =========================================================
-   DAMAGE INDICATOR
+   TEXT LABEL
    ========================================================= */
 
-function DamageIndicator({ severity, count }) {
+function FloatingLabel({ children, className = "", position = [0, 0, 0] }) {
+  return (
+    <Html position={position} center distanceFactor={10} transform sprite>
+      <div className={`scene-label ${className}`}>{children}</div>
+    </Html>
+  );
+}
+
+/* =========================================================
+   WINDOWS
+   ========================================================= */
+
+function Window({ position, rotation = [0, 0, 0], damaged = false }) {
+  return (
+    <mesh position={position} rotation={rotation}>
+      <boxGeometry args={[0.42, 0.58, 0.055]} />
+
+      <meshStandardMaterial
+        color={damaged ? "#5b2020" : "#67d9ff"}
+        emissive={damaged ? "#5b2020" : "#0b6685"}
+        emissiveIntensity={damaged ? 0.15 : 0.65}
+        metalness={0.45}
+        roughness={0.25}
+      />
+    </mesh>
+  );
+}
+
+/* =========================================================
+   BUILDING DOOR
+   ========================================================= */
+
+function BuildingDoor({ position, damaged = false }) {
+  return (
+    <group position={position}>
+      <mesh>
+        <boxGeometry args={[0.9, 1.45, 0.12]} />
+
+        <meshStandardMaterial
+          color={damaged ? "#6f2020" : "#172033"}
+          metalness={0.5}
+          roughness={0.35}
+        />
+      </mesh>
+
+      <mesh position={[0.28, 0, 0.08]}>
+        <sphereGeometry args={[0.045, 10, 10]} />
+
+        <meshStandardMaterial
+          color="#f6c453"
+          emissive="#8a6500"
+          emissiveIntensity={0.8}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/* =========================================================
+   FLOOR BAND
+   ========================================================= */
+
+function FloorBand({ width, depth, y, damaged = false }) {
+  return (
+    <mesh position={[0, y, 0]}>
+      <boxGeometry args={[width + 0.08, 0.08, depth + 0.08]} />
+
+      <meshStandardMaterial
+        color={damaged ? "#7f1d1d" : "#26364d"}
+        metalness={0.55}
+        roughness={0.45}
+      />
+    </mesh>
+  );
+}
+
+/* =========================================================
+   BUILDING DAMAGE
+   ========================================================= */
+
+function BuildingCrack({ position, rotation = [0, 0, 0], severity }) {
+  const color = getSeverityColor(severity);
+  const glow = getSeverityGlow(severity);
+
+  return (
+    <group position={position} rotation={rotation}>
+      <mesh>
+        <boxGeometry args={[0.08, 1.1, 0.035]} />
+
+        <meshStandardMaterial
+          color={color}
+          emissive={glow}
+          emissiveIntensity={1.2}
+        />
+      </mesh>
+
+      <mesh position={[0.13, -0.28, 0.01]} rotation={[0, 0, -0.65]}>
+        <boxGeometry args={[0.07, 0.55, 0.035]} />
+
+        <meshStandardMaterial
+          color={color}
+          emissive={glow}
+          emissiveIntensity={1.2}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/* =========================================================
+   SECURITY BEACON
+   ========================================================= */
+
+function SecurityBeacon({ severity, count }) {
   if (!severity) {
     return null;
   }
 
+  const color = getSeverityColor(severity);
+
   return (
-    <group position={[0, 1.25, 0]}>
-      <mesh>
-        <boxGeometry args={[0.14, 1.0, 0.08]} />
+    <group position={[0, 0, 0]}>
+      <mesh position={[0, 0.55, 0]}>
+        <cylinderGeometry args={[0.16, 0.16, 0.65, 16]} />
 
         <meshStandardMaterial
-          color="#ef4444"
-          emissive="#991b1b"
-          emissiveIntensity={1.5}
-        />
-      </mesh>
-
-      <mesh rotation={[0, 0, -0.55]} position={[0.18, -0.05, 0.01]}>
-        <boxGeometry args={[0.12, 0.7, 0.08]} />
-
-        <meshStandardMaterial
-          color="#f97316"
-          emissive="#9a3412"
+          color={color}
+          emissive={color}
           emissiveIntensity={1.4}
+          metalness={0.4}
+          roughness={0.25}
         />
       </mesh>
 
-      <Html position={[0, 0.85, 0]} center distanceFactor={13}>
-        <div className={`damage-badge ${getSeverityClass(severity)}`}>
-          ⚠ {count}
-        </div>
-      </Html>
+      <mesh position={[0, 0.95, 0]}>
+        <sphereGeometry args={[0.22, 16, 16]} />
+
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={2}
+          transparent
+          opacity={0.9}
+        />
+      </mesh>
+
+      <FloatingLabel position={[0, 1.4, 0]} className="security-label">
+        <span>⚠ {count}</span>
+        <small>{severity}</small>
+      </FloatingLabel>
     </group>
   );
 }
 
 /* =========================================================
-   METHOD BLOCK
+   METHOD / FUNCTION BLOCK
    ========================================================= */
 
-function MethodBlock({
-  method,
-  methodIndex,
-  classIndex,
+function CodeBlock({
+  item,
+  index,
+  type,
   moduleIndex,
+  classIndex,
   selectedObject,
   onSelect,
   findings,
+  position,
 }) {
-  const methodName = getItemName(method, `method_${methodIndex + 1}()`);
+  const name = getItemName(item, `${type}_${index + 1}()`);
 
-  const methodFindings = getMethodFindings(method, findings);
+  const itemFindings =
+    type === "method"
+      ? getMethodFindings(item, findings)
+      : getFunctionFindings(item, findings);
 
-  const severity = getHighestSeverity(methodFindings);
+  const severity = getHighestSeverity(itemFindings);
+
+  const damaged = itemFindings.length > 0;
 
   const isSelected =
-    selectedObject?.type === "method" &&
+    selectedObject?.type === type &&
     selectedObject?.moduleIndex === moduleIndex &&
     selectedObject?.classIndex === classIndex &&
-    selectedObject?.methodIndex === methodIndex;
+    selectedObject?.childIndex === index;
 
-  const isDamaged = methodFindings.length > 0;
-
-  let blockColor = isSelected ? "#ffffff" : "#94a3b8";
-
-  if (isDamaged) {
-    blockColor =
-      severityRank(severity) >= 4
-        ? "#ef4444"
-        : severityRank(severity) >= 3
-          ? "#f97316"
-          : "#facc15";
-  }
+  const color = damaged
+    ? getSeverityColor(severity)
+    : isSelected
+      ? "#ffffff"
+      : "#9fb3c8";
 
   return (
-    <group>
+    <group position={position}>
       <mesh
-        position={[0, 0.42, 0]}
         onClick={(event) => {
           event.stopPropagation();
 
           onSelect({
-            type: "method",
+            type,
             moduleIndex,
             classIndex,
-            methodIndex,
-            data: method,
-            findings: methodFindings,
+            childIndex: index,
+            data: item,
+            findings: itemFindings,
           });
         }}
       >
-        <boxGeometry args={[1.15, 0.65, 0.85]} />
+        <boxGeometry args={[0.78, 0.48, 0.62]} />
 
         <meshStandardMaterial
-          color={blockColor}
-          emissive={isDamaged ? blockColor : "#000000"}
-          emissiveIntensity={isDamaged ? 0.55 : isSelected ? 0.7 : 0}
-          metalness={0.1}
-          roughness={0.65}
+          color={color}
+          emissive={
+            damaged
+              ? getSeverityGlow(severity)
+              : isSelected
+                ? "#64748b"
+                : "#000000"
+          }
+          emissiveIntensity={damaged ? 1 : isSelected ? 0.7 : 0}
+          metalness={0.35}
+          roughness={0.48}
         />
       </mesh>
 
-      {isDamaged && (
-        <DamageIndicator severity={severity} count={methodFindings.length} />
+      {/* Method indicator */}
+      <mesh position={[0, 0.28, 0]}>
+        <boxGeometry args={[0.56, 0.035, 0.08]} />
+
+        <meshStandardMaterial
+          color={damaged ? color : "#38bdf8"}
+          emissive={damaged ? color : "#0e7490"}
+          emissiveIntensity={0.7}
+        />
+      </mesh>
+
+      {/* Name appears ONLY on hover/selection */}
+      {isSelected && (
+        <FloatingLabel
+          position={[0, 0.55, 0]}
+          className="code-block-label selected"
+        >
+          <strong>{name}</strong>
+
+          <span>{type === "method" ? "METHOD" : "FUNCTION"}</span>
+
+          {getLine(item) > 0 && <small>Line {getLine(item)}</small>}
+        </FloatingLabel>
       )}
 
-      <Html position={[0, 0.88, 0]} center distanceFactor={12}>
-        <div
-          className={`method-label ${
-            isSelected ? "method-label-selected" : ""
-          } ${isDamaged ? "method-label-damaged" : ""}`}
-        >
-          {methodName}
-        </div>
-      </Html>
+      {damaged && (
+        <mesh position={[0.31, 0.3, 0.31]}>
+          <sphereGeometry args={[0.07, 10, 10]} />
+
+          <meshStandardMaterial
+            color={color}
+            emissive={color}
+            emissiveIntensity={1.8}
+          />
+        </mesh>
+      )}
     </group>
   );
 }
 
 /* =========================================================
-   CLASS ROOM
+   CLASS / ROOM
    ========================================================= */
 
 function ClassRoom({
@@ -410,19 +539,32 @@ function ClassRoom({
 
   const severity = getHighestSeverity(classFindings);
 
-  const isSelected =
+  const damaged = classFindings.length > 0;
+
+  const selected =
     selectedObject?.type === "class" &&
     selectedObject?.moduleIndex === moduleIndex &&
     selectedObject?.classIndex === classIndex;
 
-  const isDamaged = classFindings.length > 0;
+  /*
+   * Six methods per floor.
+   * This means ALL methods can be displayed.
+   */
+  const methodsPerFloor = 6;
+
+  const floorCount = Math.max(1, Math.ceil(methods.length / methodsPerFloor));
+
+  const roomWidth = 3.65;
+  const roomDepth = 2.75;
+  const floorHeight = 1.05;
+
+  const roomHeight = 0.35 + floorCount * floorHeight;
 
   return (
     <group>
-      {/* CLASS FLOOR */}
-
+      {/* Room foundation */}
       <mesh
-        position={[0, 0.05, 0]}
+        position={[0, 0.08, 0]}
         onClick={(event) => {
           event.stopPropagation();
 
@@ -435,85 +577,148 @@ function ClassRoom({
           });
         }}
       >
-        <boxGeometry args={[3.6, 0.15, 2.6]} />
+        <boxGeometry args={[roomWidth, 0.16, roomDepth]} />
 
         <meshStandardMaterial
-          color={isDamaged ? "#7f1d1d" : isSelected ? "#0891b2" : "#164e63"}
-          emissive={isDamaged ? "#7f1d1d" : "#083344"}
-          emissiveIntensity={isDamaged ? 0.8 : isSelected ? 0.8 : 0.35}
-          metalness={0.2}
+          color={damaged ? "#57252b" : selected ? "#075985" : "#16324a"}
+          emissive={damaged ? "#4c0519" : selected ? "#075985" : "#06283d"}
+          emissiveIntensity={damaged ? 0.8 : selected ? 0.8 : 0.25}
+          metalness={0.35}
           roughness={0.5}
         />
       </mesh>
 
-      {/* BACK WALL */}
-
-      <mesh position={[0, 1.0, -1.15]}>
-        <boxGeometry args={[3.6, 1.9, 0.12]} />
+      {/* Room walls */}
+      <mesh position={[0, roomHeight / 2, -roomDepth / 2]}>
+        <boxGeometry args={[roomWidth, roomHeight, 0.1]} />
 
         <meshStandardMaterial
-          color={isDamaged ? "#7f1d1d" : isSelected ? "#0e7490" : "#155e75"}
+          color={damaged ? "#71313a" : "#174766"}
           transparent
-          opacity={0.88}
+          opacity={0.92}
+          metalness={0.25}
+          roughness={0.55}
         />
       </mesh>
 
-      {/* SIDE WALL */}
+      <mesh position={[-roomWidth / 2, roomHeight / 2, 0]}>
+        <boxGeometry args={[0.1, roomHeight, roomDepth]} />
 
-      <mesh position={[-1.74, 1.0, 0]}>
-        <boxGeometry args={[0.12, 1.9, 2.5]} />
-
-        <meshStandardMaterial color="#155e75" transparent opacity={0.72} />
+        <meshStandardMaterial
+          color={damaged ? "#71313a" : "#174766"}
+          transparent
+          opacity={0.9}
+        />
       </mesh>
 
-      {/* CLASS LABEL */}
+      <mesh position={[roomWidth / 2, roomHeight / 2, 0]}>
+        <boxGeometry args={[0.1, roomHeight, roomDepth]} />
 
-      <Html position={[0, 2.15, -1.0]} center distanceFactor={11}>
-        <div
-          className={`hierarchy-label ${
-            isSelected ? "hierarchy-label-selected" : ""
-          } ${isDamaged ? "hierarchy-label-damaged" : ""}`}
-        >
-          <strong>{className}</strong>
+        <meshStandardMaterial
+          color={damaged ? "#71313a" : "#174766"}
+          transparent
+          opacity={0.9}
+        />
+      </mesh>
 
-          <span>{methods.length} methods</span>
+      {/* Floors */}
+      {Array.from({
+        length: floorCount,
+      }).map((_, floorIndex) => (
+        <FloorBand
+          key={`floor-${floorIndex}`}
+          width={roomWidth}
+          depth={roomDepth}
+          y={0.2 + floorIndex * floorHeight}
+          damaged={damaged}
+        />
+      ))}
 
-          {isDamaged && <small>⚠ {classFindings.length} findings</small>}
-        </div>
-      </Html>
+      {/* Windows */}
+      {Array.from({
+        length: Math.min(4, floorCount),
+      }).map((_, windowIndex) => (
+        <Window
+          key={`window-${windowIndex}`}
+          position={[
+            -1.1 + (windowIndex % 3) * 1.1,
+            0.7 + Math.floor(windowIndex / 3) * 1.0,
+            -roomDepth / 2 - 0.07,
+          ]}
+          damaged={damaged}
+        />
+      ))}
 
-      {/* METHODS */}
+      {/* Door */}
+      <BuildingDoor
+        position={[0, 0.78, roomDepth / 2 + 0.08]}
+        damaged={damaged}
+      />
 
-      <group position={[0, 0, 0.15]}>
-        {methods.slice(0, 8).map((method, methodIndex) => {
-          const column = methodIndex % 4;
+      {/* Class sign */}
+      <FloatingLabel
+        position={[0, roomHeight + 0.45, -0.15]}
+        className={selected ? "class-label selected" : "class-label"}
+      >
+        <strong>{className}</strong>
 
-          const row = Math.floor(methodIndex / 4);
+        <span>
+          {methods.length} {methods.length === 1 ? "method" : "methods"}
+        </span>
 
-          const x = -1.65 + column * 1.1;
+        {floorCount > 1 && <small>{floorCount} floors</small>}
 
-          const z = -0.45 + row * 0.9;
+        {damaged && (
+          <small className="label-danger">
+            ⚠ {classFindings.length} findings
+          </small>
+        )}
+      </FloatingLabel>
+
+      {/* Methods */}
+      <group>
+        {methods.map((method, methodIndex) => {
+          const floor = Math.floor(methodIndex / methodsPerFloor);
+
+          const positionOnFloor = methodIndex % methodsPerFloor;
+
+          const column = positionOnFloor % 3;
+
+          const row = Math.floor(positionOnFloor / 3);
+
+          const x = -1.1 + column * 1.1;
+
+          const z = -0.55 + row * 0.9;
+
+          const y = 0.42 + floor * floorHeight;
 
           return (
-            <group
+            <CodeBlock
               key={
                 `method-${moduleIndex}-` + `${classIndex}-` + `${methodIndex}`
               }
-              position={[x, 0, z]}
-            >
-              <MethodBlock
-                method={method}
-                methodIndex={methodIndex}
-                classIndex={classIndex}
-                moduleIndex={moduleIndex}
-                selectedObject={selectedObject}
-                onSelect={onSelect}
-                findings={findings}
-              />
-            </group>
+              item={method}
+              index={methodIndex}
+              type="method"
+              moduleIndex={moduleIndex}
+              classIndex={classIndex}
+              selectedObject={selectedObject}
+              onSelect={onSelect}
+              findings={findings}
+              position={[x, y, z]}
+            />
           );
         })}
       </group>
+
+      {/* Damage crack */}
+      {damaged && (
+        <BuildingCrack
+          position={[roomWidth / 2 + 0.08, roomHeight * 0.55, 0]}
+          rotation={[0, Math.PI / 2, 0]}
+          severity={severity}
+        />
+      )}
     </group>
   );
 }
@@ -532,24 +737,6 @@ function ModuleBuilding({
   selectedObject,
   onSelect,
 }) {
-  const columns = Math.min(3, Math.max(1, modules.length));
-
-  const rows = Math.ceil(modules.length / columns);
-
-  const spacing = 11;
-
-  const column = index % columns;
-
-  const row = Math.floor(index / columns);
-
-  const totalWidth = (columns - 1) * spacing;
-
-  const totalDepth = (rows - 1) * spacing;
-
-  const x = column * spacing - totalWidth / 2;
-
-  const z = row * spacing - totalDepth / 2;
-
   const moduleName = getItemName(module, `Module ${index + 1}`);
 
   const moduleClasses = getModuleClasses(module, classes);
@@ -558,24 +745,63 @@ function ModuleBuilding({
 
   const moduleFindings = getModuleFindings(module, findings);
 
-  const moduleSeverity = getHighestSeverity(moduleFindings);
+  const severity = getHighestSeverity(moduleFindings);
 
-  const isDamaged = moduleFindings.length > 0;
+  const damaged = moduleFindings.length > 0;
 
-  const isSelected =
+  const selected =
     selectedObject?.type === "module" && selectedObject?.index === index;
 
-  const classPositions = moduleClasses.map((_, classIndex) => {
-    const column = classIndex % 2;
+  /*
+   * Layout:
+   * Four class rooms per floor.
+   * Extra classes create additional depth.
+   */
+  const classesPerRow = 2;
 
-    const row = Math.floor(classIndex / 2);
+  const classRows = Math.max(
+    1,
+    Math.ceil(moduleClasses.length / classesPerRow),
+  );
 
-    const classX = column === 0 ? -2 : 2;
+  const moduleWidth = 9.4;
 
-    const classZ = row === 0 ? -0.8 : 2.3;
+  const moduleDepth = Math.max(8.2, classRows * 4.0 + 1.8);
 
-    return [classX, classZ];
-  });
+  /*
+   * Height depends on the most complex class.
+   */
+  const largestMethodCount = moduleClasses.reduce(
+    (max, classItem) => Math.max(max, getClassMethods(classItem).length),
+    0,
+  );
+
+  const methodFloors = Math.max(1, Math.ceil(largestMethodCount / 6));
+
+  const buildingHeight = 4.2 + Math.max(0, methodFloors - 1) * 1.05;
+
+  /*
+   * Main city layout.
+   */
+  const columns = Math.min(3, Math.max(1, modules.length));
+
+  const rows = Math.ceil(modules.length / columns);
+
+  const spacingX = 12;
+  const spacingZ = 11;
+
+  const totalWidth = (columns - 1) * spacingX;
+
+  const totalDepth = (rows - 1) * spacingZ;
+
+  const x = (index % columns) * spacingX - totalWidth / 2;
+
+  const z = Math.floor(index / columns) * spacingZ - totalDepth / 2;
+
+  /*
+   * Top-level function annex.
+   */
+  const functionColumns = 5;
 
   return (
     <group position={[x, 0, z]}>
@@ -584,7 +810,7 @@ function ModuleBuilding({
          ================================================= */}
 
       <mesh
-        position={[0, 0, 0]}
+        position={[0, 0.12, 0]}
         onClick={(event) => {
           event.stopPropagation();
 
@@ -596,30 +822,46 @@ function ModuleBuilding({
           });
         }}
       >
-        <boxGeometry args={[8.5, 0.25, 8]} />
+        <boxGeometry args={[moduleWidth, 0.24, moduleDepth]} />
 
         <meshStandardMaterial
-          color={isDamaged ? "#7f1d1d" : isSelected ? "#2563eb" : "#1e293b"}
-          emissive={isDamaged ? "#7f1d1d" : "#000000"}
-          emissiveIntensity={isDamaged ? 0.5 : 0}
-          metalness={0.25}
-          roughness={0.55}
+          color={damaged ? "#441b22" : selected ? "#163d70" : "#111c2d"}
+          emissive={damaged ? "#450a0a" : selected ? "#0b3b82" : "#000000"}
+          emissiveIntensity={damaged ? 0.8 : selected ? 0.8 : 0}
+          metalness={0.5}
+          roughness={0.45}
         />
       </mesh>
 
       {/* =================================================
-          CORNER PILLARS
+          BUILDING BODY
+         ================================================= */}
+
+      <mesh position={[0, buildingHeight / 2, 0]}>
+        <boxGeometry args={[moduleWidth, buildingHeight, moduleDepth]} />
+
+        <meshStandardMaterial
+          color={damaged ? "#4d2229" : selected ? "#173d68" : "#172538"}
+          transparent
+          opacity={0.2}
+          metalness={0.35}
+          roughness={0.6}
+        />
+      </mesh>
+
+      {/* =================================================
+          CORNER COLUMNS
          ================================================= */}
 
       {[
-        [-4, 0, -3.75],
-        [4, 0, -3.75],
-        [-4, 0, 3.75],
-        [4, 0, 3.75],
-      ].map((position, pillarIndex) => (
+        [-moduleWidth / 2 + 0.2, -moduleDepth / 2 + 0.2],
+        [moduleWidth / 2 - 0.2, -moduleDepth / 2 + 0.2],
+        [-moduleWidth / 2 + 0.2, moduleDepth / 2 - 0.2],
+        [moduleWidth / 2 - 0.2, moduleDepth / 2 - 0.2],
+      ].map(([pillarX, pillarZ], pillarIndex) => (
         <mesh
           key={`pillar-${pillarIndex}`}
-          position={[position[0], 2.7, position[2]]}
+          position={[pillarX, buildingHeight / 2, pillarZ]}
           onClick={(event) => {
             event.stopPropagation();
 
@@ -631,78 +873,153 @@ function ModuleBuilding({
             });
           }}
         >
-          <boxGeometry args={[0.28, 5.4, 0.28]} />
+          <boxGeometry args={[0.3, buildingHeight, 0.3]} />
 
           <meshStandardMaterial
-            color={isDamaged ? "#ef4444" : isSelected ? "#60a5fa" : "#334155"}
-            emissive={isDamaged ? "#7f1d1d" : "#000000"}
-            emissiveIntensity={isDamaged ? 0.8 : 0}
-            metalness={0.4}
-            roughness={0.5}
+            color={damaged ? "#a7373f" : selected ? "#3b82f6" : "#33445c"}
+            emissive={damaged ? "#64151d" : "#000000"}
+            emissiveIntensity={damaged ? 0.8 : 0}
+            metalness={0.6}
+            roughness={0.4}
           />
         </mesh>
       ))}
 
       {/* =================================================
-          TOP FRAME
+          FLOOR STRUCTURE
          ================================================= */}
 
-      <mesh position={[0, 5.4, 0]}>
-        <boxGeometry args={[8.5, 0.28, 8]} />
+      {Array.from({
+        length: Math.max(2, Math.ceil(buildingHeight / 1.4)),
+      }).map((_, floorIndex) => (
+        <FloorBand
+          key={`module-floor-${floorIndex}`}
+          width={moduleWidth}
+          depth={moduleDepth}
+          y={0.5 + floorIndex * 1.25}
+          damaged={damaged}
+        />
+      ))}
+
+      {/* =================================================
+          WINDOWS
+         ================================================= */}
+
+      {Array.from({
+        length: Math.max(4, Math.min(12, Math.ceil(moduleWidth / 0.9))),
+      }).map((_, windowIndex) => {
+        const column = windowIndex % 6;
+
+        const row = Math.floor(windowIndex / 6);
+
+        return (
+          <Window
+            key={`module-window-${windowIndex}`}
+            position={[
+              -3.4 + column * 1.35,
+              1.35 + row * 1.25,
+              -moduleDepth / 2 - 0.08,
+            ]}
+            damaged={damaged}
+          />
+        );
+      })}
+
+      {/* =================================================
+          MAIN DOOR
+         ================================================= */}
+
+      <BuildingDoor
+        position={[0, 0.85, moduleDepth / 2 + 0.08]}
+        damaged={damaged}
+      />
+
+      {/* =================================================
+          ROOFTOP
+         ================================================= */}
+
+      <mesh position={[0, buildingHeight + 0.12, 0]}>
+        <boxGeometry args={[moduleWidth + 0.4, 0.25, moduleDepth + 0.4]} />
 
         <meshStandardMaterial
-          color={isDamaged ? "#ef4444" : isSelected ? "#60a5fa" : "#3b82f6"}
-          emissive={isDamaged ? "#7f1d1d" : "#000000"}
-          emissiveIntensity={isDamaged ? 0.8 : 0}
-          metalness={0.35}
+          color={damaged ? "#a7373f" : selected ? "#3b82f6" : "#385272"}
+          emissive={damaged ? "#64151d" : selected ? "#0b3b82" : "#000000"}
+          emissiveIntensity={damaged ? 0.9 : selected ? 0.7 : 0}
+          metalness={0.5}
           roughness={0.4}
         />
       </mesh>
 
       {/* =================================================
-          MODULE LABEL
+          MODULE NAME
          ================================================= */}
 
-      <Html position={[0, 6.5, 0]} center distanceFactor={10}>
-        <div
-          className={`building-label ${
-            isSelected ? "building-label-selected" : ""
-          } ${isDamaged ? "building-label-damaged" : ""}`}
-        >
-          <strong>{moduleName}</strong>
+      <FloatingLabel
+        position={[0, buildingHeight + 0.72, 0]}
+        className={selected ? "module-label selected" : "module-label"}
+      >
+        <strong>{moduleName}</strong>
 
-          <span>
-            {moduleClasses.length} classes · {moduleFunctions.length} functions
-          </span>
+        <span>
+          {moduleClasses.length} classes
+          {" · "}
+          {moduleFunctions.length} functions
+        </span>
 
-          {isDamaged && (
-            <small>⚠ {moduleFindings.length} security findings</small>
-          )}
-        </div>
-      </Html>
+        {moduleFindings.length > 0 && (
+          <small className="label-danger">
+            ⚠ {moduleFindings.length} findings
+          </small>
+        )}
+      </FloatingLabel>
 
       {/* =================================================
-          MODULE DAMAGE INDICATOR
+          SECURITY BEACON
          ================================================= */}
 
-      {isDamaged && (
-        <DamageIndicator
-          severity={moduleSeverity}
-          count={moduleFindings.length}
-        />
+      {damaged && (
+        <group position={[0, buildingHeight, 0]}>
+          <SecurityBeacon severity={severity} count={moduleFindings.length} />
+        </group>
       )}
 
       {/* =================================================
-          CLASSES
+          STRUCTURAL CRACKS
+         ================================================= */}
+
+      {damaged && (
+        <>
+          <BuildingCrack
+            position={[moduleWidth / 2 + 0.04, buildingHeight * 0.45, -1.1]}
+            rotation={[0, Math.PI / 2, 0]}
+            severity={severity}
+          />
+
+          <BuildingCrack
+            position={[-moduleWidth / 2 - 0.04, buildingHeight * 0.68, 0.9]}
+            rotation={[0, -Math.PI / 2, 0]}
+            severity={severity}
+          />
+        </>
+      )}
+
+      {/* =================================================
+          CLASS ROOMS
          ================================================= */}
 
       {moduleClasses.map((classItem, classIndex) => {
-        const position = classPositions[classIndex];
+        const column = classIndex % classesPerRow;
+
+        const row = Math.floor(classIndex / classesPerRow);
+
+        const classX = column === 0 ? -2.35 : 2.35;
+
+        const classZ = -moduleDepth / 2 + 2.2 + row * 4.0;
 
         return (
           <group
-            key={`class-${index}-` + `${classIndex}`}
-            position={[position[0], 0.2, position[1]]}
+            key={`class-${index}-${classIndex}`}
+            position={[classX, 0.25, classZ]}
           >
             <ClassRoom
               classItem={classItem}
@@ -717,134 +1034,224 @@ function ModuleBuilding({
       })}
 
       {/* =================================================
-          TOP LEVEL FUNCTIONS
+          TOP LEVEL FUNCTION ANNEX
          ================================================= */}
 
-      {moduleFunctions.slice(0, 12).map((functionItem, functionIndex) => {
-        const x = -3.2 + (functionIndex % 6) * 1.25;
-
-        const z = 3.0;
-
-        const functionFindings = getFunctionFindings(functionItem, findings);
-
-        const functionSeverity = getHighestSeverity(functionFindings);
-
-        const isFunctionDamaged = functionFindings.length > 0;
-
-        const isFunctionSelected =
-          selectedObject?.type === "function" &&
-          selectedObject?.index === index &&
-          selectedObject?.childIndex === functionIndex;
-
-        const functionName = getItemName(
-          functionItem,
-          `function_${functionIndex + 1}()`,
-        );
-
-        let functionColor = isFunctionSelected ? "#ffffff" : "#a9b8c9";
-
-        if (isFunctionDamaged) {
-          functionColor =
-            severityRank(functionSeverity) >= 4
-              ? "#ef4444"
-              : severityRank(functionSeverity) >= 3
-                ? "#f97316"
-                : "#facc15";
-        }
-
-        return (
-          <group
-            key={`function-${index}-` + functionIndex}
-            position={[x, 0.3, z]}
-          >
-            <mesh
-              position={[0, 0.45, 0]}
-              onClick={(event) => {
-                event.stopPropagation();
-
-                onSelect({
-                  type: "function",
-                  index,
-                  childIndex: functionIndex,
-                  data: functionItem,
-                  findings: functionFindings,
-                });
-              }}
-            >
-              <boxGeometry args={[1.0, 0.7, 0.8]} />
-
-              <meshStandardMaterial
-                color={functionColor}
-                emissive={isFunctionDamaged ? functionColor : "#000000"}
-                emissiveIntensity={
-                  isFunctionDamaged ? 0.6 : isFunctionSelected ? 0.6 : 0
-                }
-                metalness={0.1}
-                roughness={0.7}
-              />
-            </mesh>
-
-            {isFunctionDamaged && (
-              <DamageIndicator
-                severity={functionSeverity}
-                count={functionFindings.length}
-              />
-            )}
-
-            <Html position={[0, 0.95, 0]} center distanceFactor={14}>
-              <div
-                className={`function-label ${
-                  isFunctionSelected ? "function-label-selected" : ""
-                } ${isFunctionDamaged ? "function-label-damaged" : ""}`}
-              >
-                {functionName}
-              </div>
-            </Html>
-          </group>
-        );
-      })}
-
       {moduleFunctions.length > 0 && (
-        <Html position={[0, 1.65, 3.0]} center distanceFactor={13}>
-          <div className="top-level-label">TOP-LEVEL FUNCTIONS</div>
-        </Html>
+        <group position={[0, 0.38, moduleDepth / 2 - 0.9]}>
+          {moduleFunctions.map((functionItem, functionIndex) => {
+            const column = functionIndex % functionColumns;
+
+            const row = Math.floor(functionIndex / functionColumns);
+
+            const x = -2.55 + column * 1.28;
+
+            const z = row * 0.92;
+
+            const functionFindings = getFunctionFindings(
+              functionItem,
+              findings,
+            );
+
+            const severity = getHighestSeverity(functionFindings);
+
+            const damaged = functionFindings.length > 0;
+
+            const selectedFunction =
+              selectedObject?.type === "function" &&
+              selectedObject?.index === index &&
+              selectedObject?.childIndex === functionIndex;
+
+            return (
+              <CodeBlock
+                key={`function-${index}-${functionIndex}`}
+                item={functionItem}
+                index={functionIndex}
+                type="function"
+                moduleIndex={index}
+                classIndex={null}
+                selectedObject={selectedObject}
+                onSelect={onSelect}
+                findings={findings}
+                position={[x, row * 0.12, z]}
+              />
+            );
+          })}
+
+          <FloatingLabel
+            position={[0, 0.82, 0]}
+            className="function-zone-label"
+          >
+            <strong>FUNCTIONS</strong>
+
+            <span>{moduleFunctions.length} top-level</span>
+          </FloatingLabel>
+        </group>
       )}
     </group>
   );
 }
 
 /* =========================================================
-   DEPENDENCY BRIDGE
+   DEPENDENCY CONNECTION
    ========================================================= */
 
-function DependencyBridge({ from, to }) {
+function DependencyConnection({ from, to, index }) {
   if (!from || !to) {
     return null;
   }
 
-  const dx = to[0] - from[0];
+  const start = [from[0], 0.65, from[2]];
 
-  const dz = to[2] - from[2];
+  const end = [to[0], 0.65, to[2]];
 
-  const distance = Math.sqrt(dx * dx + dz * dz);
-
-  const angle = Math.atan2(dz, dx);
-
-  const midpoint = [(from[0] + to[0]) / 2, 2.4, (from[2] + to[2]) / 2];
+  const middle = [(start[0] + end[0]) / 2, 1.8, (start[2] + end[2]) / 2];
 
   return (
-    <mesh position={midpoint} rotation={[0, -angle, 0]}>
-      <boxGeometry args={[distance, 0.28, 0.35]} />
-
-      <meshStandardMaterial
-        color="#f59e0b"
-        emissive="#7c4a03"
-        emissiveIntensity={0.45}
-        metalness={0.25}
-        roughness={0.45}
+    <group>
+      <Line
+        points={[start, middle, end]}
+        color="#e6a52e"
+        lineWidth={1.2}
+        transparent
+        opacity={0.65}
       />
-    </mesh>
+
+      <mesh position={middle}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+
+        <meshStandardMaterial
+          color="#f5b83d"
+          emissive="#7a4c00"
+          emissiveIntensity={1}
+          metalness={0.5}
+          roughness={0.35}
+        />
+      </mesh>
+    </group>
   );
+}
+
+/* =========================================================
+   CITY LAYOUT
+   ========================================================= */
+
+function createCityLayout(modules) {
+  if (!modules.length) {
+    return {
+      positions: [],
+      width: 30,
+      depth: 30,
+      center: [0, 2, 0],
+    };
+  }
+
+  const columns = Math.min(3, Math.max(1, modules.length));
+
+  const rows = Math.ceil(modules.length / columns);
+
+  const spacingX = 12;
+  const spacingZ = 11;
+
+  const totalWidth = (columns - 1) * spacingX;
+
+  const totalDepth = (rows - 1) * spacingZ;
+
+  const positions = modules.map((_, index) => {
+    const column = index % columns;
+
+    const row = Math.floor(index / columns);
+
+    return [
+      column * spacingX - totalWidth / 2,
+      0,
+      row * spacingZ - totalDepth / 2,
+    ];
+  });
+
+  return {
+    positions,
+
+    width: Math.max(30, totalWidth + 20),
+
+    depth: Math.max(30, totalDepth + 20),
+
+    center: [0, 2.8, 0],
+  };
+}
+
+/* =========================================================
+   DEPENDENCY RESOLUTION
+   ========================================================= */
+
+function resolveModuleIndex(value, modules) {
+  if (value === null || value === undefined) {
+    return -1;
+  }
+
+  const text = String(value);
+
+  const numeric = Number(value);
+
+  if (Number.isInteger(numeric) && numeric >= 0 && numeric < modules.length) {
+    return numeric;
+  }
+
+  return modules.findIndex((module) => {
+    const candidates = [
+      module?.name,
+      module?.module_name,
+      module?.path,
+      module?.file,
+    ];
+
+    return candidates.some(
+      (candidate) =>
+        pathsMatch(candidate, text) ||
+        String(candidate || "").toLowerCase() === text.toLowerCase(),
+    );
+  });
+}
+
+function getDependencyEndpoints(dependency, modules, index) {
+  const fromValue =
+    dependency?.from ??
+    dependency?.source ??
+    dependency?.source_module ??
+    dependency?.sourceModule ??
+    dependency?.importer ??
+    dependency?.parent;
+
+  const toValue =
+    dependency?.to ??
+    dependency?.target ??
+    dependency?.target_module ??
+    dependency?.targetModule ??
+    dependency?.imported ??
+    dependency?.dependency;
+
+  let fromIndex = resolveModuleIndex(fromValue, modules);
+
+  let toIndex = resolveModuleIndex(toValue, modules);
+
+  /*
+   * Older architecture output may not
+   * contain explicit endpoints.
+   * Preserve the visual connection in
+   * that case rather than hiding dependencies.
+   */
+  if (fromIndex < 0 || toIndex < 0) {
+    if (modules.length > 1) {
+      fromIndex = index % modules.length;
+
+      toIndex = (index + 1) % modules.length;
+    }
+  }
+
+  return {
+    fromIndex,
+    toIndex,
+  };
 }
 
 /* =========================================================
@@ -860,80 +1267,78 @@ function CodeScapeScene({
   selectedObject,
   onSelect,
 }) {
-  const layout = useMemo(() => {
-    if (modules.length === 0) {
-      return {
-        positions: [],
-        center: [0, 2.5, 0],
-        width: 24,
-        depth: 24,
-      };
-    }
+  const layout = useMemo(() => createCityLayout(modules), [modules]);
 
-    const columns = Math.min(3, modules.length);
+  const dependencyConnections = useMemo(() => {
+    return dependencies
+      .map((dependency, index) => {
+        const { fromIndex, toIndex } = getDependencyEndpoints(
+          dependency,
+          modules,
+          index,
+        );
 
-    const rows = Math.ceil(modules.length / columns);
+        if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+          return null;
+        }
 
-    const spacing = 11;
-
-    const totalWidth = (columns - 1) * spacing;
-
-    const totalDepth = (rows - 1) * spacing;
-
-    const positions = modules.map((_, index) => {
-      const column = index % columns;
-
-      const row = Math.floor(index / columns);
-
-      return [
-        column * spacing - totalWidth / 2,
-
-        0,
-
-        row * spacing - totalDepth / 2,
-      ];
-    });
-
-    return {
-      positions,
-
-      center: [0, 2.5, 0],
-
-      width: Math.max(28, totalWidth + 18),
-
-      depth: Math.max(28, totalDepth + 18),
-    };
-  }, [modules]);
+        return {
+          dependency,
+          index,
+          from: layout.positions[fromIndex],
+          to: layout.positions[toIndex],
+        };
+      })
+      .filter(Boolean);
+  }, [dependencies, modules, layout.positions]);
 
   return (
     <>
-      {/* LIGHTING */}
+      {/* =================================================
+          WORLD LIGHTING
+         ================================================= */}
 
-      <ambientLight intensity={1.35} />
+      <ambientLight intensity={1.15} />
 
-      <directionalLight position={[15, 25, 15]} intensity={2.6} />
+      <directionalLight position={[12, 24, 14]} intensity={2.8} castShadow />
 
-      <directionalLight position={[-15, 15, -10]} intensity={1.2} />
+      <directionalLight position={[-15, 14, -12]} intensity={1.1} />
+
+      <pointLight position={[0, 10, 0]} intensity={0.7} distance={35} />
 
       <Environment preset="city" />
 
-      {/* FINITE GRID */}
+      {/* =================================================
+          GROUND
+         ================================================= */}
+
+      <mesh position={[0, -0.22, 0]} receiveShadow>
+        <boxGeometry args={[layout.width, 0.18, layout.depth]} />
+
+        <meshStandardMaterial
+          color="#07101e"
+          metalness={0.55}
+          roughness={0.65}
+        />
+      </mesh>
 
       <Grid
-        position={[0, -0.12, 0]}
+        position={[0, -0.1, 0]}
         args={[layout.width, layout.depth]}
         cellSize={1}
-        cellThickness={0.5}
-        cellColor="#14558a"
+        cellThickness={0.45}
+        cellColor="#16405f"
         sectionSize={5}
         sectionThickness={1}
-        sectionColor="#1d75b8"
-        fadeDistance={35}
-        fadeStrength={1}
+        sectionColor="#24658c"
+        fadeDistance={42}
+        fadeStrength={1.2}
         infiniteGrid={false}
       />
 
-      {/* BUILDINGS */}
+      {/* =================================================
+          BUILDINGS
+         ================================================= */}
 
       {modules.map((module, index) => (
         <ModuleBuilding
@@ -949,34 +1354,93 @@ function CodeScapeScene({
         />
       ))}
 
-      {/* DEPENDENCIES */}
+      {/* =================================================
+          DEPENDENCIES
+         ================================================= */}
 
-      {dependencies
-        .slice(0, Math.max(0, modules.length - 1))
-        .map((dependency, index) => {
-          const from = layout.positions[index];
+      {dependencyConnections.map(({ dependency, index, from, to }) => (
+        <DependencyConnection
+          key={`dependency-${index}`}
+          from={from}
+          to={to}
+          index={index}
+        />
+      ))}
 
-          const to = layout.positions[index + 1];
-
-          return (
-            <DependencyBridge key={`dependency-${index}`} from={from} to={to} />
-          );
-        })}
+      {/* =================================================
+          CAMERA
+         ================================================= */}
 
       <OrbitControls
+        makeDefault
         enableDamping
         dampingFactor={0.08}
         minDistance={7}
-        maxDistance={55}
+        maxDistance={60}
         minPolarAngle={0.35}
         maxPolarAngle={Math.PI / 2.05}
         target={layout.center}
         enablePan
-        panSpeed={0.5}
-        rotateSpeed={0.6}
-        zoomSpeed={0.8}
+        panSpeed={0.45}
+        rotateSpeed={0.55}
+        zoomSpeed={0.75}
       />
     </>
+  );
+}
+
+/* =========================================================
+   SOURCE CODE VIEWER
+   ========================================================= */
+
+function SourceCodeViewer({ sourceViewer, onClose }) {
+  if (!sourceViewer) {
+    return null;
+  }
+
+  const lines = String(sourceViewer.content || "").split("\n");
+
+  const highlightedLine = Number(sourceViewer.line || 0);
+
+  return (
+    <div className="source-overlay">
+      <div className="source-panel">
+        <div className="source-header">
+          <div>
+            <div className="source-eyebrow">CODESCAPE · SOURCE INSPECTOR</div>
+
+            <h2>{sourceViewer.filePath || "Source File"}</h2>
+
+            {highlightedLine > 0 && <span>Focused line {highlightedLine}</span>}
+          </div>
+
+          <button className="source-close" onClick={onClose}>
+            ×
+          </button>
+        </div>
+
+        <div className="source-code">
+          {lines.map((line, index) => {
+            const lineNumber = index + 1;
+
+            const active = lineNumber === highlightedLine;
+
+            return (
+              <div
+                key={`source-line-${lineNumber}`}
+                className={active ? "source-line active" : "source-line"}
+              >
+                <span className="line-number">
+                  {String(lineNumber).padStart(4, " ")}
+                </span>
+
+                <code>{line || " "}</code>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1004,60 +1468,140 @@ function CodeScape3DPage() {
   const findings =
     analysis?.structure?.security_findings || analysis?.security_findings || [];
 
+  const recommendations =
+    analysis?.structure?.recommendations?.recommendations ||
+    analysis?.recommendations?.recommendations ||
+    [];
+
   const [selectedObject, setSelectedObject] = useState(null);
+
+  const [sourceViewer, setSourceViewer] = useState(null);
+
+  const [sourceLoading, setSourceLoading] = useState(false);
+
+  const [sourceError, setSourceError] = useState("");
 
   if (!analysis || !architecture) {
     return (
       <div className="codescape3d-page">
         <div className="codescape3d-empty">
-          <h2>No architecture data found</h2>
+          <div className="empty-icon">◈</div>
 
-          <p>
-            Please analyze a project before opening the 3D software building.
-          </p>
+          <h2>No architecture data</h2>
 
-          <button onClick={() => navigate("/upload")}>Go to Upload</button>
+          <p>Analyze a project before opening the CodeScape structural city.</p>
+
+          <button onClick={() => navigate("/upload")}>Analyze Project</button>
         </div>
       </div>
     );
   }
 
+  const openSourceViewer = async () => {
+    const selected = selectedObject?.data;
+
+    if (!selected) {
+      return;
+    }
+
+    const filePath =
+      selected?.file ||
+      selected?.path ||
+      selected?.module ||
+      selected?.module_name;
+
+    if (!filePath) {
+      setSourceError("No source file path is available for this component.");
+
+      return;
+    }
+
+    setSourceLoading(true);
+    setSourceError("");
+
+    try {
+      const projectId =
+        analysis?.project_id ||
+        analysis?.project?.project_id ||
+        location.state?.project?.project_id;
+
+      if (!projectId) {
+        throw new Error("Project ID is not available.");
+      }
+
+      const result = await getSourceFile(projectId, filePath);
+
+      setSourceViewer({
+        filePath,
+        content: result?.content || result?.source || result?.text || "",
+        line: getLine(selected),
+      });
+    } catch (error) {
+      setSourceError(error?.message || "Unable to load source file.");
+    } finally {
+      setSourceLoading(false);
+    }
+  };
+
+  const recommendationForSelected =
+    selectedObject?.findings?.length > 0
+      ? recommendations.find((recommendation) =>
+          recommendation?.source_finding_ids?.some((id) =>
+            selectedObject.findings.some((finding) => finding?.id === id),
+          ),
+        )
+      : null;
+
   return (
     <div className="codescape3d-page">
-      {/* HEADER */}
+      {/* =================================================
+          HEADER
+         ================================================= */}
 
       <header className="codescape3d-header">
         <div>
-          <div className="codescape3d-eyebrow">CODESCAPE · STRUCTURAL VIEW</div>
+          <div className="codescape3d-eyebrow">
+            CODESCAPE
+            <span>/</span>
+            SOFTWARE CITY
+          </div>
 
-          <h1>Software Building</h1>
+          <h1>Structural Software View</h1>
 
-          <p>Explore your software architecture as a 3D structural model.</p>
+          <p>
+            Explore modules, classes, functions, dependencies and security
+            damage as an interactive 3D architecture.
+          </p>
         </div>
 
-        <button
-          className="architecture-back-button"
-          onClick={() =>
-            navigate("/architecture", {
-              state: {
-                analysis,
-              },
-            })
-          }
-        >
-          ← Architecture
-        </button>
+        <div className="header-actions">
+          <button
+            className="architecture-back-button"
+            onClick={() =>
+              navigate("/architecture", {
+                state: {
+                  analysis,
+                },
+              })
+            }
+          >
+            ← Architecture
+          </button>
+        </div>
       </header>
 
-      {/* 3D VIEW */}
+      {/* =================================================
+          3D VIEW
+         ================================================= */}
 
       <main className="codescape3d-view">
         <Canvas
+          shadows
           camera={{
-            position: [15, 12, 15],
+            position: [16, 12, 17],
             fov: 45,
             near: 0.1,
-            far: 150,
+            far: 180,
           }}
           dpr={[1, 1.75]}
           gl={{
@@ -1065,6 +1609,8 @@ function CodeScape3DPage() {
           }}
         >
           <color attach="background" args={["#020617"]} />
+
+          <fog attach="fog" args={["#020617", 38, 95]} />
 
           <CodeScapeScene
             modules={modules}
@@ -1078,59 +1624,75 @@ function CodeScape3DPage() {
         </Canvas>
 
         {/* =================================================
-            STATS
+            TOP STAT BAR
            ================================================= */}
 
         <div className="codescape3d-stats">
           <div className="stat-item">
             <strong>{modules.length}</strong>
-
             <span>MODULES</span>
           </div>
 
           <div className="stat-item">
             <strong>{classes.length}</strong>
-
             <span>CLASSES</span>
           </div>
 
           <div className="stat-item">
             <strong>{functions.length}</strong>
-
             <span>FUNCTIONS</span>
           </div>
 
           <div className="stat-item">
             <strong>{dependencies.length}</strong>
-
             <span>DEPENDENCIES</span>
           </div>
 
           <div className="stat-item stat-danger">
             <strong>{findings.length}</strong>
-
             <span>FINDINGS</span>
           </div>
         </div>
 
-        {/* CONTROLS */}
+        {/* =================================================
+            VIEW INFORMATION
+           ================================================= */}
 
         <div className="codescape3d-controls">
-          <div className="panel-title">CONTROLS</div>
+          <div className="panel-title">NAVIGATION</div>
 
-          <div>🖱️ Drag · Rotate</div>
+          <div>
+            <span>Drag</span>
+            Rotate
+          </div>
 
-          <div>🔵 Scroll · Zoom</div>
+          <div>
+            <span>Scroll</span>
+            Zoom
+          </div>
 
-          <div>🖐️ Right click · Pan</div>
+          <div>
+            <span>Right Drag</span>
+            Pan
+          </div>
 
-          <div>👆 Click · Inspect</div>
+          <div>
+            <span>Click</span>
+            Inspect
+          </div>
+
+          <div>
+            <span>Hover</span>
+            Identify
+          </div>
         </div>
 
-        {/* LEGEND */}
+        {/* =================================================
+            LEGEND
+           ================================================= */}
 
         <div className="codescape3d-legend">
-          <div className="panel-title">STRUCTURAL LEGEND</div>
+          <div className="panel-title">ARCHITECTURE</div>
 
           <div className="legend-item">
             <span className="legend-box module-color" />
@@ -1144,7 +1706,7 @@ function CodeScape3DPage() {
 
           <div className="legend-item">
             <span className="legend-box function-color" />
-            Function
+            Function / Method
           </div>
 
           <div className="legend-item">
@@ -1159,11 +1721,36 @@ function CodeScape3DPage() {
         </div>
 
         {/* =================================================
+            SECURITY STATUS
+           ================================================= */}
+
+        <div className="security-summary">
+          <div className="panel-title">SECURITY STATUS</div>
+
+          {findings.length === 0 ? (
+            <div className="security-clean">
+              <span>✓</span>
+              No supported security findings
+            </div>
+          ) : (
+            <div className="security-warning">
+              <span>!</span>
+
+              <div>
+                <strong>{findings.length} findings</strong>
+
+                <small>Structural damage detected</small>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* =================================================
             INSPECTOR
            ================================================= */}
 
         {selectedObject && (
-          <div className="codescape3d-inspector">
+          <aside className="codescape3d-inspector">
             <div className="inspector-header">
               <div>
                 <div className="inspector-eyebrow">STRUCTURAL INSPECTOR</div>
@@ -1171,7 +1758,7 @@ function CodeScape3DPage() {
                 <h2>
                   {selectedObject.type === "module" && "Module"}
 
-                  {selectedObject.type === "class" && "Class"}
+                  {selectedObject.type === "class" && "Class / Room"}
 
                   {selectedObject.type === "method" && "Method"}
 
@@ -1192,56 +1779,56 @@ function CodeScape3DPage() {
                 {getItemName(selectedObject.data, "Unnamed Component")}
               </div>
 
-              {/* MODULE */}
+              <div className="inspector-type-pill">
+                {selectedObject.type.toUpperCase()}
+              </div>
 
-              {selectedObject.type === "module" && (
-                <>
+              {/* DETAILS */}
+
+              <div className="inspector-details">
+                <div className="inspector-row">
+                  <span>File</span>
+
+                  <strong>
+                    {selectedObject.data?.file ||
+                      selectedObject.data?.path ||
+                      selectedObject.data?.module ||
+                      "Unknown"}
+                  </strong>
+                </div>
+
+                {selectedObject.type !== "module" && (
                   <div className="inspector-row">
-                    <span>Type</span>
+                    <span>Line</span>
 
-                    <strong>Module</strong>
+                    <strong>{getLine(selectedObject.data) || "Unknown"}</strong>
                   </div>
+                )}
 
-                  <div className="inspector-row">
-                    <span>File</span>
+                {selectedObject.type === "module" && (
+                  <>
+                    <div className="inspector-row">
+                      <span>Classes</span>
 
-                    <strong>
-                      {selectedObject.data?.path ||
-                        selectedObject.data?.file ||
-                        "Unknown"}
-                    </strong>
-                  </div>
+                      <strong>
+                        {getModuleClasses(selectedObject.data, classes).length}
+                      </strong>
+                    </div>
 
-                  <div className="inspector-row">
-                    <span>Classes</span>
+                    <div className="inspector-row">
+                      <span>Functions</span>
 
-                    <strong>
-                      {getModuleClasses(selectedObject.data, classes).length}
-                    </strong>
-                  </div>
-                </>
-              )}
+                      <strong>
+                        {
+                          getModuleFunctions(selectedObject.data, functions)
+                            .length
+                        }
+                      </strong>
+                    </div>
+                  </>
+                )}
 
-              {/* CLASS */}
-
-              {selectedObject.type === "class" && (
-                <>
-                  <div className="inspector-row">
-                    <span>Type</span>
-
-                    <strong>Class</strong>
-                  </div>
-
-                  <div className="inspector-row">
-                    <span>File</span>
-
-                    <strong>
-                      {selectedObject.data?.file ||
-                        selectedObject.data?.path ||
-                        "Unknown"}
-                    </strong>
-                  </div>
-
+                {selectedObject.type === "class" && (
                   <div className="inspector-row">
                     <span>Methods</span>
 
@@ -1249,87 +1836,43 @@ function CodeScape3DPage() {
                       {getClassMethods(selectedObject.data).length}
                     </strong>
                   </div>
-                </>
+                )}
+              </div>
+
+              {/* SOURCE BUTTON */}
+
+              {selectedObject.type !== "module" && (
+                <button
+                  className="source-button"
+                  onClick={openSourceViewer}
+                  disabled={sourceLoading}
+                >
+                  {sourceLoading ? "Loading Source..." : "View Source Code"}
+                </button>
               )}
 
-              {/* METHOD */}
+              {sourceError && <div className="source-error">{sourceError}</div>}
 
-              {selectedObject.type === "method" && (
-                <>
-                  <div className="inspector-row">
-                    <span>Type</span>
+              {/* SECURITY */}
 
-                    <strong>Class Method</strong>
-                  </div>
-
-                  <div className="inspector-row">
-                    <span>File</span>
-
-                    <strong>
-                      {selectedObject.data?.file ||
-                        selectedObject.data?.path ||
-                        "Unknown"}
-                    </strong>
-                  </div>
-
-                  <div className="inspector-row">
-                    <span>Line</span>
-
-                    <strong>{getLine(selectedObject.data) || "Unknown"}</strong>
-                  </div>
-                </>
-              )}
-
-              {/* FUNCTION */}
-
-              {selectedObject.type === "function" && (
-                <>
-                  <div className="inspector-row">
-                    <span>Type</span>
-
-                    <strong>Top-Level Function</strong>
-                  </div>
-
-                  <div className="inspector-row">
-                    <span>File</span>
-
-                    <strong>
-                      {selectedObject.data?.file ||
-                        selectedObject.data?.path ||
-                        "Unknown"}
-                    </strong>
-                  </div>
-
-                  <div className="inspector-row">
-                    <span>Line</span>
-
-                    <strong>{getLine(selectedObject.data) || "Unknown"}</strong>
-                  </div>
-                </>
-              )}
-
-              {/* =================================================
-                  SECURITY FINDINGS
-                 ================================================= */}
-
-              {selectedObject.findings?.length > 0 && (
+              {selectedObject.findings?.length > 0 ? (
                 <div className="inspector-security">
                   <div className="security-title">⚠ SECURITY FINDINGS</div>
 
-                  {selectedObject.findings.map((finding, index) => {
-                    const severity = String(
-                      finding?.severity || "Informational",
-                    ).toLowerCase();
+                  {selectedObject.findings.map((finding, findingIndex) => {
+                    const severity = finding?.severity || "Informational";
 
                     return (
                       <div
-                        key={finding?.id || index}
-                        className={`finding-card finding-${severity}`}
+                        key={finding?.id || findingIndex}
+                        className={`finding-card finding-${String(
+                          severity,
+                        ).toLowerCase()}`}
                       >
                         <div className="finding-top">
                           <strong>{finding?.id || "Finding"}</strong>
 
-                          <span>{finding?.severity || "Informational"}</span>
+                          <span>{severity}</span>
                         </div>
 
                         <div className="finding-title">
@@ -1371,16 +1914,38 @@ function CodeScape3DPage() {
                     );
                   })}
                 </div>
+              ) : (
+                <div className="inspector-healthy">
+                  <span>✓</span>
+                  No security findings mapped to this component.
+                </div>
               )}
 
-              {!selectedObject.findings?.length && (
-                <div className="inspector-healthy">
-                  ✓ No security findings mapped to this component.
+              {/* RECOMMENDATION */}
+
+              {recommendationForSelected && (
+                <div className="inspector-recommendation">
+                  <div className="recommendation-heading">
+                    RECOMMENDED ACTION
+                  </div>
+
+                  <strong>{recommendationForSelected.title}</strong>
+
+                  <p>{recommendationForSelected.recommendation}</p>
                 </div>
               )}
             </div>
-          </div>
+          </aside>
         )}
+
+        {/* =================================================
+            SOURCE VIEWER
+           ================================================= */}
+
+        <SourceCodeViewer
+          sourceViewer={sourceViewer}
+          onClose={() => setSourceViewer(null)}
+        />
       </main>
     </div>
   );
